@@ -555,7 +555,7 @@ namespace OcufiiAPI.Controllers
         [HttpPatch("resellers/{resellerId:guid}")]
         public async Task<ActionResult<ApiResponse>> UpdateReseller(Guid resellerId, [FromBody] UpdateResellerDto dto)
         {
-            if (!await _permissionService.CanPerformAsync(User, "resellers.edit"))
+            if (!await _permissionService.CanPerformAsync(User, "resellers.update"))
                 return Unauthorized(new ApiResponse(false, "No permission to update reseller") { ErrorCode = "OC-116" });
 
             var reseller = await _db.Resellers.FindAsync(resellerId);
@@ -831,6 +831,20 @@ namespace OcufiiAPI.Controllers
             await _db.SaveChangesAsync();
 
             return Ok(new ApiResponse(true, "Password changed successfully") { ErrorCode = null });
+        }
+
+        [Authorize(Roles = "super_admin")]
+        [HttpPost("reset-terms-of-service")]
+        public async Task<IActionResult> ResetTermsOfServiceForAllUsers()
+        {
+            if (!await _permissionService.CanPerformAsync(User, "platform.config"))
+                return Unauthorized(new ApiResponse(false, "No permission") { ErrorCode = "OC-131" });
+
+            await _db.Users
+                .Where(u => !u.IsDeleted)
+                .ExecuteUpdateAsync(u => u.SetProperty(x => x.TermsOfServiceAccepted, false));
+
+            return Ok(new ApiResponse(true, "Terms of Service reset for all users") { ErrorCode = null });
         }
     }
 }

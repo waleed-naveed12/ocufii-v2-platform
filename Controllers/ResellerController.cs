@@ -217,6 +217,10 @@ namespace OcufiiAPI.Controllers
                 FirstName = dto.OwnerFirstName,
                 LastName = dto.OwnerLastName ?? "",
                 PhoneNumber = dto.PhoneNumber,
+                Age = dto.Age,
+                DateOfBirth = dto.DateOfBirth,
+                Gender = dto.Gender,
+                TermsOfServiceAccepted = false,
                 Password = hash,
                 RoleId = (await _db.Roles.FirstOrDefaultAsync(r => r.RoleName == "account_owner"))!.RoleId,
                 TenantId = tenant.TenantId,
@@ -353,7 +357,6 @@ namespace OcufiiAPI.Controllers
                     }
                 }
 
-                // Validate & Update Tenant Permissions (only account category + reseller must have them)
                 if (dto.Permissions != null)
                 {
                     var requestedAccountPermIds = dto.Permissions

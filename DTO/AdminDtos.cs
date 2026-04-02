@@ -58,6 +58,11 @@ namespace OcufiiAPI.DTO
         public string OwnerFirstName { get; set; } = string.Empty;
         public string? OwnerLastName { get; set; }
         public string PhoneNumber { get; set; } = string.Empty;
+        public int? Age { get; set; }
+        public DateTime? DateOfBirth { get; set; }
+        public string? Gender { get; set; }
+
+        public bool TermsOfServiceAccepted { get; set; } = false;
         public List<PermissionAssignmentDto>? Permissions { get; set; }
         public List<FeatureAssignmentDto>? Features { get; set; }
     }

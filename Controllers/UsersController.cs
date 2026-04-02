@@ -1,14 +1,15 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using OcufiiAPI.DTO;
-using OcufiiAPI.Models;
-using OcufiiAPI.Repositories;
-using System.Text.Json;
-using OcufiiAPI.Extensions;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using OcufiiAPI.Configs;
-using Microsoft.EntityFrameworkCore;
+using OcufiiAPI.Data;
+using OcufiiAPI.DTO;
+using OcufiiAPI.Extensions;
+using OcufiiAPI.Models;
+using OcufiiAPI.Repositories;
 using Swashbuckle.AspNetCore.Annotations;
+using System.Text.Json;
 
 namespace OcufiiAPI.Controllers
 {
@@ -24,11 +25,14 @@ namespace OcufiiAPI.Controllers
     {
         private readonly IRepository<User> _userRepo;
         private readonly IRepository<Role> _roleRepo;
+        private readonly OcufiiDbContext _db;
 
-        public UsersController(IRepository<User> userRepo, IRepository<Role> roleRepo)
+        public UsersController(IRepository<User> userRepo, IRepository<Role> roleRepo,
+            OcufiiDbContext db)
         {
             _userRepo = userRepo;
             _roleRepo = roleRepo;
+            _db = db;
         }
 
         [Authorize]
@@ -216,6 +220,24 @@ namespace OcufiiAPI.Controllers
             {
                 ErrorCode = null
             });
+        }
+
+        [HttpPost("accept-terms-of-service")]
+        [Authorize]
+        public async Task<IActionResult> AcceptTermsOfService()
+        {
+            var userId = User.GetUserId();
+
+            var user = await _db.Users.FindAsync(userId);
+            if (user == null)
+                return NotFound(new ApiResponse(false, "User not found") { ErrorCode = "OC-058" });
+
+            user.TermsOfServiceAccepted = true;
+            user.DateUpdated = DateTime.UtcNow;
+            _db.Users.Update(user);
+            await _db.SaveChangesAsync();
+
+            return Ok(new ApiResponse(true, "Terms of Service accepted successfully") { ErrorCode = null });
         }
     }
 }

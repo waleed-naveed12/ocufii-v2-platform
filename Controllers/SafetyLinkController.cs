@@ -124,9 +124,6 @@ public class SafetyLinkController : ControllerBase
     }
 
     [HttpPatch("update-linked/{linkId:guid}")]
-    [SwaggerOperation(Summary = "Update Linked Member", Description = "Updates toggles and alias for an accepted link.")]
-    [SwaggerResponse(200, "Updated")]
-    [SwaggerResponse(404, "Link not found")]
     public async Task<ActionResult<ApiResponse>> UpdateLinkedMember(Guid linkId, [FromBody] UpdateLinkedDto dto)
     {
         var senderId = User.GetUserId();
@@ -153,43 +150,42 @@ public class SafetyLinkController : ControllerBase
     }
 
     [HttpPatch("snooze/{linkId:guid}")]
-    [SwaggerOperation(Summary = "Apply Snooze", Description = "Applies snooze on notifications for a link.")]
-    [SwaggerResponse(200, "Snooze applied")]
-    [SwaggerResponse(400, "Invalid snooze period")]
-    [SwaggerResponse(404, "Link not found")]
     public async Task<ActionResult<ApiResponse>> ApplySnooze(Guid linkId, [FromBody] SnoozeDto dto)
     {
         var userId = User.GetUserId();
-        var link = await _safetyLinkRepo.Query().FirstOrDefaultAsync(l => l.Id == linkId && (l.SenderId == userId || l.RecipientId == userId) && l.Status == SafetyLinkStatus.Accepted);
-        if (link == null) return NotFound(new ApiResponse(false, "Accepted link not found")
-        {
-            ErrorCode = "OC-039"
-        });
 
-        if (dto.StartTime >= dto.EndTime) return BadRequest(new ApiResponse(false, "Start time must be before end time")
-        {
-            ErrorCode = "OC-040"
-        });
+        var link = await _safetyLinkRepo.Query()
+            .FirstOrDefaultAsync(l => l.Id == linkId && (l.SenderId == userId || l.RecipientId == userId)
+                                   && l.Status == SafetyLinkStatus.Accepted);
 
-        link.Snooze = true;
-        link.SnoozeStartTime = dto.StartTime;
-        link.SnoozeEndTime = dto.EndTime;
+        if (link == null)
+            return NotFound(new ApiResponse(false, "Accepted link not found") { ErrorCode = "OC-039" });
+
+        if (dto.StartTime == null && dto.EndTime == null)
+        {
+            link.Snooze = false;
+            link.SnoozeStartTime = null;
+            link.SnoozeEndTime = null;
+        }
+        else
+        {
+            if (dto.StartTime >= dto.EndTime)
+                return BadRequest(new ApiResponse(false, "Start time must be before end time") { ErrorCode = "OC-040" });
+
+            link.Snooze = true;
+            link.SnoozeStartTime = dto.StartTime;
+            link.SnoozeEndTime = dto.EndTime;
+        }
+
         link.UpdatedAt = DateTime.UtcNow;
-
         _safetyLinkRepo.Update(link);
         await _safetyLinkRepo.SaveAsync();
 
-        return Ok(new ApiResponse(true, "Snooze applied")
-        {
-            ErrorCode = null
-        });
+        var message = link.Snooze ? "Snooze applied" : "Snooze removed (unsnoozed)";
+        return Ok(new ApiResponse(true, message) { ErrorCode = null });
     }
 
     [HttpPatch("status/{linkId:guid}")]
-    [SwaggerOperation(Summary = "Update SafetyLink Status", Description = "Updates status of a link/invitation. Use string values: Pending, Accepted, Rejected, Block, Inactive.")]
-    [SwaggerResponse(200, "Status updated")]
-    [SwaggerResponse(400, "Invalid status value")]
-    [SwaggerResponse(404, "Link not found")]
     public async Task<ActionResult<ApiResponse>> UpdateStatus(Guid linkId, [FromBody] UpdateStatusDto dto)
     {
         var userId = User.GetUserId();
@@ -364,8 +360,11 @@ public class SafetyLinkController : ControllerBase
         link.Status = SafetyLinkStatus.Accepted;
         link.OTP = string.Empty;
         link.OTPExpiry = null;
+        link.AliasName = dto.AliasName;
         link.UpdatedAt = DateTime.UtcNow;
         _safetyLinkRepo.Update(link);
+
+
 
         var existingReverse = await _safetyLinkRepo.Query()
             .FirstOrDefaultAsync(l => l.SenderId == recipientId && l.RecipientId == senderId);
@@ -411,21 +410,18 @@ public class SafetyLinkController : ControllerBase
     {
         var userId = User.GetUserId();
 
-        var myEmail = await _db.Users
-            .Where(u => u.UserId == userId)
-            .Select(u => u.Email)
-            .FirstOrDefaultAsync() ?? "unknown@email.com";
-
         var allLinks = await _safetyLinkRepo.Query()
-            .Where(l => (l.SenderId == userId || l.RecipientId == userId) &&
-                        (l.Status == SafetyLinkStatus.Accepted || l.Status == SafetyLinkStatus.Pending))
+            .Where(l => l.SenderId == userId || l.RecipientId == userId)
             .Select(l => new
             {
                 LinkId = l.Id,
                 SenderEmail = _db.Users.Where(u => u.UserId == l.SenderId).Select(u => u.Email).FirstOrDefault(),
                 RecipientEmail = _db.Users.Where(u => u.UserId == l.RecipientId).Select(u => u.Email).FirstOrDefault(),
                 AliasName = l.AliasName ?? "No alias set",
-                Status = l.Status,
+                Status = l.Status,                                      // Keep real enum
+                IsCurrentlySnoozed = l.Snooze
+                    && l.SnoozeStartTime <= DateTime.UtcNow
+                    && l.SnoozeEndTime >= DateTime.UtcNow,
                 EnableLocation = l.EnableLocation,
                 EnableSafety = l.EnableSafety,
                 EnableSecurity = l.EnableSecurity,
@@ -438,14 +434,15 @@ public class SafetyLinkController : ControllerBase
             .ToListAsync();
 
         var outbound = allLinks
-            .Where(l => l.IsOutbound)  // Both Accepted and Pending outgoing
+            .Where(l => l.IsOutbound)
             .Select(l => new LinkedMemberDto
             {
                 LinkId = l.LinkId,
-                Email = l.SenderEmail,          // My email (outbound sender)
-                LinkedEmail = l.RecipientEmail, 
+                Email = l.SenderEmail,
+                LinkedEmail = l.RecipientEmail,
                 AliasName = l.AliasName,
-                Status = l.Status,
+                Status = l.Status,                                   // Real enum
+                DisplayStatus = l.IsCurrentlySnoozed ? "Snoozed" : l.Status.ToString(),  // For UI
                 EnableLocation = l.EnableLocation,
                 EnableSafety = l.EnableSafety,
                 EnableSecurity = l.EnableSecurity,
@@ -459,14 +456,15 @@ public class SafetyLinkController : ControllerBase
             .ToList();
 
         var inbound = allLinks
-            .Where(l => !l.IsOutbound && l.Status == SafetyLinkStatus.Accepted)
+            .Where(l => !l.IsOutbound)
             .Select(l => new LinkedMemberDto
             {
                 LinkId = l.LinkId,
-                Email = l.RecipientEmail,     
-                LinkedEmail = l.SenderEmail, 
+                Email = l.RecipientEmail,
+                LinkedEmail = l.SenderEmail,
                 AliasName = l.AliasName,
                 Status = l.Status,
+                DisplayStatus = l.IsCurrentlySnoozed ? "Snoozed" : l.Status.ToString(),
                 EnableLocation = l.EnableLocation,
                 EnableSafety = l.EnableSafety,
                 EnableSecurity = l.EnableSecurity,
@@ -477,15 +475,63 @@ public class SafetyLinkController : ControllerBase
             })
             .ToList();
 
-        return Ok(new ApiResponse(true, "Linked members and pending outgoing requests retrieved")
+        return Ok(new ApiResponse(true, "Linked members retrieved")
         {
             Data = new
             {
                 Outbound = outbound,
-                Inbound = inbound   
+                Inbound = inbound
             },
             ErrorCode = null
         });
+    }
+
+    [HttpPatch("toggle-link/{linkId:guid}")]
+    public async Task<ActionResult<ApiResponse>> ToggleLink(Guid linkId)
+    {
+        var userId = User.GetUserId();
+
+        var link = await _safetyLinkRepo.Query()
+            .FirstOrDefaultAsync(l => l.Id == linkId && (l.SenderId == userId || l.RecipientId == userId));
+
+        if (link == null)
+            return NotFound(new ApiResponse(false, "Link not found") { ErrorCode = "OC-048" });
+
+        if (link.Status != SafetyLinkStatus.Accepted && link.Status != SafetyLinkStatus.Inactive)
+            return BadRequest(new ApiResponse(false, "Can only toggle Accepted or Inactive links") { ErrorCode = "OC-049" });
+
+        if (link.Status == SafetyLinkStatus.Accepted)
+        {
+            // Unlink
+            link.Status = SafetyLinkStatus.Inactive;
+            link.LastUnlinkedBy = (link.SenderId == userId) ? "Sender" : "Recipient";
+            link.UpdatedAt = DateTime.UtcNow;
+
+            _safetyLinkRepo.Update(link);
+            await _safetyLinkRepo.SaveAsync();
+
+            return Ok(new ApiResponse(true, "Link has been unlinked. Only the person who unlinked can relink.")
+            { ErrorCode = null });
+        }
+        else 
+        {
+            if (link.LastUnlinkedBy == null ||
+                (link.SenderId == userId && link.LastUnlinkedBy != "Sender") ||
+                (link.RecipientId == userId && link.LastUnlinkedBy != "Recipient"))
+            {
+                return BadRequest(new ApiResponse(false, "Only the person who unlinked can relink this connection")
+                { ErrorCode = "OC-050" });
+            }
+
+            link.Status = SafetyLinkStatus.Accepted;
+            link.LastUnlinkedBy = null; 
+            link.UpdatedAt = DateTime.UtcNow;
+
+            _safetyLinkRepo.Update(link);
+            await _safetyLinkRepo.SaveAsync();
+
+            return Ok(new ApiResponse(true, "Link has been successfully restored") { ErrorCode = null });
+        }
     }
 
     [HttpDelete("delete-linked/{linkId:guid}")]

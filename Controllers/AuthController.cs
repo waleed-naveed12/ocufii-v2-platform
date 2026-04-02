@@ -57,10 +57,9 @@ public class AuthController : ControllerBase
 
     [HttpPost("login")]
     [AllowAnonymous]
-    [SwaggerOperation(Summary = "User Login", Description = "Authenticates user and returns tokens")]
+    [SwaggerOperation(Summary = "User Login", Description = "Authenticates user and returns tokens with permissions and features")]
     public async Task<IActionResult> Login([FromBody] LoginDto dto)
     {
-        // Only active users (not soft-deleted)
         var user = await _userRepo.Query()
             .Where(u => u.Email == dto.Email && !u.IsDeleted && u.DeletedAt == null)
             .Include(u => u.Role)
@@ -76,6 +75,7 @@ public class AuthController : ControllerBase
         var (accessToken, refreshToken) = GenerateTokens(user);
         await SaveRefreshToken(user.UserId, refreshToken);
 
+        // Get user device token
         var userDeviceToken = await _db.DeviceToken
             .Where(t => t.UserId == user.UserId)
             .OrderByDescending(t => t.DeviceTokenId)
@@ -87,6 +87,32 @@ public class AuthController : ControllerBase
                 version = t.Version
             })
             .FirstOrDefaultAsync();
+
+        var permissions = await _db.TenantPermissions
+            .Where(tp => tp.TenantId == user.TenantId && tp.IsGranted)
+            .Join(_db.Permissions,
+                  tp => tp.PermissionId,
+                  p => p.PermissionId,
+                  (tp, p) => new
+                  {
+                      PermissionId = p.PermissionId,
+                      Key = p.Key,
+                      IsGranted = tp.IsGranted
+                  })
+            .ToListAsync();
+
+        var features = await _db.TenantFeatures
+        .Where(tf => tf.TenantId == user.TenantId && tf.IsEnabled)
+        .Join(_db.Features,
+              tf => tf.FeatureId,
+              f => f.Id,
+              (tf, f) => new
+              {
+                  FeatureId = f.Id,
+                  Key = f.Key,
+                  IsEnabled = tf.IsEnabled
+              })
+        .ToListAsync();
 
         Log.Information("User logged in: {Email}", user.Email);
 
@@ -101,9 +127,12 @@ public class AuthController : ControllerBase
                     user.Email,
                     user.FirstName,
                     user.LastName,
-                    user.Company
+                    user.Company,
+                    user.TermsOfServiceAccepted
                 },
-                deviceToken = userDeviceToken
+                deviceToken = userDeviceToken,
+                permissions,
+                features 
             },
             ErrorCode = null
         });
@@ -212,7 +241,11 @@ public class AuthController : ControllerBase
             Email = dto.Email,
             FirstName = dto.FirstName,
             LastName = dto.LastName,
-            PhoneNumber = dto.PhoneNumber,
+            PhoneNumber = dto.PhoneNumber,           // Now optional
+            Age = dto.Age,                           // New - optional
+            DateOfBirth = dto.DateOfBirth,           // New - optional
+            Gender = dto.Gender,                     // New - optional
+            TermsOfServiceAccepted = dto.TermsOfServiceAccepted,
             Company = dto.Company ?? "Ocufii User",
             Username = dto.UserName ?? dto.Email.Split('@')[0],
             Password = _hasher.HashPassword(null!, dto.Password),

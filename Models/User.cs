@@ -46,6 +46,12 @@ namespace OcufiiAPI.Models
         public string? Imei { get; set; }
         public string? Username { get; set; }
 
+        public int? Age { get; set; }             
+        public DateTime? DateOfBirth { get; set; } 
+        public string? Gender { get; set; } 
+
+        public bool TermsOfServiceAccepted { get; set; } = false;
+
         public Guid? TenantId { get; set; }
 
         public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();

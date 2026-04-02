@@ -32,6 +32,7 @@ namespace OcufiiAPI.DTO
 
     public class AcceptInvitationDto
     {
+        public string AliasName { get; set; } = string.Empty;
         public string OTP { get; set; } = string.Empty;
     }
 
@@ -45,6 +46,7 @@ namespace OcufiiAPI.DTO
         public bool EnableSafety { get; set; }
         public bool EnableSecurity { get; set; }
         public bool Snooze { get; set; }
+        public string DisplayStatus { get; set; } = string.Empty;
         public DateTime? SnoozeStartTime { get; set; }
         public DateTime? SnoozeEndTime { get; set; }
         public bool IsOtpExpired { get; set; }

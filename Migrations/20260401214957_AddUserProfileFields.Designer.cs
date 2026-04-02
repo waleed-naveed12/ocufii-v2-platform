@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using OcufiiAPI.Data;
@@ -11,9 +12,11 @@ using OcufiiAPI.Data;
 namespace OcufiiAPI.Migrations
 {
     [DbContext(typeof(OcufiiDbContext))]
-    partial class OcufiiDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260401214957_AddUserProfileFields")]
+    partial class AddUserProfileFields
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1132,9 +1135,6 @@ namespace OcufiiAPI.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
                         .HasDefaultValue(false);
-
-                    b.Property<string>("LastUnlinkedBy")
-                        .HasColumnType("text");
 
                     b.Property<string>("OTP")
                         .IsRequired()
