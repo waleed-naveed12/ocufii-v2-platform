@@ -17,6 +17,17 @@ import ResellerDetailView from "../../pages/AdminPortal/ResellerDetailView";
 import Tenants from "../../pages/AdminPortal/Tenants";
 import TenantDetails from "../../pages/AdminPortal/TenantDetails";
 
+// Helper function to convert absolute paths to relative paths for nested routes
+const toRelativePath = (path) => {
+  if (!path) return path;
+  // Skip external URLs and relative paths
+  if (path.includes("://") || path.startsWith("#")) return path;
+  // Remove leading slash and portal prefix
+  return path.startsWith("/")
+    ? path.substring(1).split("/").slice(1).join("/")
+    : path;
+};
+
 const AdminPortalRoutes = () => {
   return (
     <Routes>
@@ -132,10 +143,7 @@ const AdminPortalRoutes = () => {
           </ProtectedRoute>
         }
       />
-      <Route
-        path="*"
-        element={<Navigate to={ROUTE.LOGIN} replace />}
-      />
+      <Route path="*" element={<Navigate to={ROUTE.LOGIN} replace />} />
     </Routes>
   );
 };

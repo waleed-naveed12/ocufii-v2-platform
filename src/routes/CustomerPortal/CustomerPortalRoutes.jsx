@@ -27,6 +27,17 @@ import Settings from "../../pages/CustomerPortal/Settings";
 import Map from "../../pages/CustomerPortal/Map";
 import { LoadingContainer } from "../../styles/CustomerPortal/App.styled";
 
+// Helper function to convert absolute paths to relative paths for nested routes
+const toRelativePath = (path) => {
+  if (!path) return path;
+  // Skip external URLs and relative paths
+  if (path.includes("://") || path.startsWith("#")) return path;
+  // Remove leading slash and portal prefix
+  return path.startsWith("/")
+    ? path.substring(1).split("/").slice(1).join("/")
+    : path;
+};
+
 const CustomerPortalRoutes = () => {
   const { isAuthenticated, isLoading } = useUser();
 
@@ -36,9 +47,15 @@ const CustomerPortalRoutes = () => {
 
   return (
     <Routes>
-      <Route path={ROUTE.LOGIN} element={<Login />} />
-      <Route path={ROUTE.FORGOT_PASSWORD} element={<ForgotPassword />} />
-      <Route path={ROUTE.RESET_PASSWORD} element={<ResetPassword />} />
+      <Route path={toRelativePath(ROUTE.LOGIN)} element={<Login />} />
+      <Route
+        path={toRelativePath(ROUTE.FORGOT_PASSWORD)}
+        element={<ForgotPassword />}
+      />
+      <Route
+        path={toRelativePath(ROUTE.RESET_PASSWORD)}
+        element={<ResetPassword />}
+      />
       <Route
         path={ROUTE.DASHBOARD}
         element={
@@ -103,8 +120,14 @@ const CustomerPortalRoutes = () => {
           </ProtectedRoute>
         }
       />
-      <Route path={ROUTE.RESEND_EMAIL} element={<ResendEmail />} />
-      <Route path={ROUTE.EMAIL_VERIFIED} element={<EmailVerified />} />
+      <Route
+        path={toRelativePath(ROUTE.RESEND_EMAIL)}
+        element={<ResendEmail />}
+      />
+      <Route
+        path={toRelativePath(ROUTE.EMAIL_VERIFIED)}
+        element={<EmailVerified />}
+      />
       <Route
         path={ROUTE.INVITE_CONTACT}
         element={

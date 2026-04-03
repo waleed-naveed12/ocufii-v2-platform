@@ -14,7 +14,7 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     // Get token from sessionStorage (tab-specific)
-    const token = sessionStorage.getItem("ocufii_auth_token");
+    const token = sessionStorage.getItem("ocufii_admin_auth_token");
 
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -40,8 +40,8 @@ api.interceptors.response.use(
       );
 
       // Token expired or invalid - clear this tab's session
-      sessionStorage.removeItem("ocufii_auth_token");
-      sessionStorage.removeItem("ocufii_user_session");
+      sessionStorage.removeItem("ocufii_admin_auth_token");
+      sessionStorage.removeItem("ocufii_admin_user_session");
 
       // Redirect to login page if not already there
       if (window.location.pathname !== "/login") {
