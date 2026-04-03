@@ -14,7 +14,7 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     // Get token from sessionStorage (tab-specific)
-    const token = sessionStorage.getItem("ocufii_auth_token");
+    const token = sessionStorage.getItem("ocufii_admin_auth_token");
 
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
