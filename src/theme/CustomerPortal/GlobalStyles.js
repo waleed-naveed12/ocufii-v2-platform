@@ -3,7 +3,7 @@ import { createGlobalStyle } from "styled-components";
 export const GlobalStyles = createGlobalStyle`
   @font-face {
     font-family: 'Decimal';
-    src: url('assets/fonts/decimal-light.ttf') format('truetype');
+    src: url('/fonts/CustomerPortalFonts/decimal-light.ttf') format('truetype');
     font-weight: 300;
     font-style: normal;
     font-display: swap;
@@ -11,7 +11,7 @@ export const GlobalStyles = createGlobalStyle`
 
   @font-face {
     font-family: 'Decimal';
-    src: url('assets/fonts/decimal-book.ttf') format('truetype');
+    src: url('/fonts/CustomerPortalFonts/decimal-book.ttf') format('truetype');
     font-weight: 400;
     font-style: normal;
     font-display: swap;
@@ -19,7 +19,7 @@ export const GlobalStyles = createGlobalStyle`
 
   @font-face {
     font-family: 'Decimal';
-    src: url('assets/fonts/decimal-medium.ttf') format('truetype');
+    src: url('/fonts/CustomerPortalFonts/decimal-medium.ttf') format('truetype');
     font-weight: 500;
     font-style: normal;
     font-display: swap;
@@ -27,7 +27,7 @@ export const GlobalStyles = createGlobalStyle`
 
   @font-face {
     font-family: 'Decimal';
-    src: url('assets/fonts/decimal-semibold.ttf') format('truetype');
+    src: url('/fonts/CustomerPortalFonts/decimal-semibold.ttf') format('truetype');
     font-weight: 600;
     font-style: normal;
     font-display: swap;
@@ -35,7 +35,7 @@ export const GlobalStyles = createGlobalStyle`
 
   @font-face {
     font-family: 'Decimal';
-    src: url('assets/fonts/decimal-bold.otf') format('opentype');
+    src: url('/fonts/CustomerPortalFonts/decimal-bold.otf') format('opentype');
     font-weight: 700;
     font-style: normal;
     font-display: swap;
@@ -43,7 +43,7 @@ export const GlobalStyles = createGlobalStyle`
 
   @font-face {
     font-family: 'Decimal';
-    src: url('assets/fonts/decimal-extrablack.otf') format('opentype');
+    src: url('/fonts/CustomerPortalFonts/decimal-extrablack.otf') format('opentype');
     font-weight: 800;
     font-style: normal;
     font-display: swap;
@@ -51,7 +51,7 @@ export const GlobalStyles = createGlobalStyle`
 
   @font-face {
     font-family: 'Decimal';
-    src: url('assets/fonts/decimal-black.ttf') format('truetype');
+    src: url('/fonts/CustomerPortalFonts/decimal-black.ttf') format('truetype');
     font-weight: 900;
     font-style: normal;
     font-display: swap;
@@ -59,7 +59,7 @@ export const GlobalStyles = createGlobalStyle`
 
   @font-face {
     font-family: 'Decimal';
-    src: url('assets/fonts/decimal-ultra.ttf') format('truetype');
+    src: url('/fonts/CustomerPortalFonts/decimal-ultra.ttf') format('truetype');
     font-weight: 950;
     font-style: normal;
     font-display: swap;
@@ -67,7 +67,7 @@ export const GlobalStyles = createGlobalStyle`
 
   @font-face {
     font-family: 'Decimal';
-    src: url('assets/fonts/decimal-ultra-italic.ttf') format('truetype');
+    src: url('/fonts/CustomerPortalFonts/decimal-ultra-italic.ttf') format('truetype');
     font-weight: 950;
     font-style: italic;
     font-display: swap;
