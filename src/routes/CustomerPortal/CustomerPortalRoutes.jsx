@@ -30,7 +30,12 @@ import { LoadingContainer } from "../../styles/CustomerPortal/App.styled";
 // Helper function to convert absolute paths to relative paths for nested routes
 const toRelativePath = (path) => {
   if (!path) return path;
-  return path.startsWith("/") ? path.substring(1) : path;
+  // Skip external URLs and relative paths
+  if (path.includes("://") || path.startsWith("#")) return path;
+  // Remove leading slash and portal prefix
+  return path.startsWith("/")
+    ? path.substring(1).split("/").slice(1).join("/")
+    : path;
 };
 
 const CustomerPortalRoutes = () => {
@@ -43,8 +48,14 @@ const CustomerPortalRoutes = () => {
   return (
     <Routes>
       <Route path={toRelativePath(ROUTE.LOGIN)} element={<Login />} />
-      <Route path={toRelativePath(ROUTE.FORGOT_PASSWORD)} element={<ForgotPassword />} />
-      <Route path={toRelativePath(ROUTE.RESET_PASSWORD)} element={<ResetPassword />} />
+      <Route
+        path={toRelativePath(ROUTE.FORGOT_PASSWORD)}
+        element={<ForgotPassword />}
+      />
+      <Route
+        path={toRelativePath(ROUTE.RESET_PASSWORD)}
+        element={<ResetPassword />}
+      />
       <Route
         path={toRelativePath(ROUTE.DASHBOARD)}
         element={
@@ -109,8 +120,14 @@ const CustomerPortalRoutes = () => {
           </ProtectedRoute>
         }
       />
-      <Route path={toRelativePath(ROUTE.RESEND_EMAIL)} element={<ResendEmail />} />
-      <Route path={toRelativePath(ROUTE.EMAIL_VERIFIED)} element={<EmailVerified />} />
+      <Route
+        path={toRelativePath(ROUTE.RESEND_EMAIL)}
+        element={<ResendEmail />}
+      />
+      <Route
+        path={toRelativePath(ROUTE.EMAIL_VERIFIED)}
+        element={<EmailVerified />}
+      />
       <Route
         path={toRelativePath(ROUTE.INVITE_CONTACT)}
         element={
@@ -187,7 +204,7 @@ const CustomerPortalRoutes = () => {
         path="*"
         element={
           <Navigate
-            to={toRelativePath(isAuthenticated ? ROUTE.DASHBOARD : ROUTE.LOGIN)}
+            to={isAuthenticated ? ROUTE.DASHBOARD : ROUTE.LOGIN}
             replace
           />
         }

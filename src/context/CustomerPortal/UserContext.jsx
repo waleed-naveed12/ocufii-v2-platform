@@ -3,8 +3,8 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 const UserContext = createContext();
 
 // SessionStorage keys for tab-specific storage (allows multiple accounts in different tabs)
-const SESSION_STORAGE_KEY = "ocufii_user_session";
-const AUTH_TOKEN_KEY = "ocufii_auth_token";
+const SESSION_STORAGE_KEY = "ocufii_customer_user_session";
+const AUTH_TOKEN_KEY = "ocufii_customer_auth_token";
 
 export const useUser = () => {
   const context = useContext(UserContext);

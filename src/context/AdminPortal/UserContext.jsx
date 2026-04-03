@@ -11,8 +11,8 @@ export const UserProvider = ({ children }) => {
     // Check if user is authenticated (check sessionStorage for token)
     const checkAuth = async () => {
       try {
-        const token = sessionStorage.getItem("ocufii_auth_token");
-        const userData = sessionStorage.getItem("ocufii_user_session");
+        const token = sessionStorage.getItem("ocufii_admin_auth_token");
+        const userData = sessionStorage.getItem("ocufii_admin_user_session");
 
         if (token && userData) {
           setUser(JSON.parse(userData));
@@ -29,16 +29,19 @@ export const UserProvider = ({ children }) => {
   }, []);
 
   const login = (userData, token) => {
-    sessionStorage.setItem("ocufii_auth_token", token);
-    sessionStorage.setItem("ocufii_user_session", JSON.stringify(userData));
+    sessionStorage.setItem("ocufii_admin_auth_token", token);
+    sessionStorage.setItem(
+      "ocufii_admin_user_session",
+      JSON.stringify(userData),
+    );
 
     setUser(userData);
     setIsAuthenticated(true);
   };
 
   const logout = () => {
-    sessionStorage.removeItem("ocufii_auth_token");
-    sessionStorage.removeItem("ocufii_user_session");
+    sessionStorage.removeItem("ocufii_admin_auth_token");
+    sessionStorage.removeItem("ocufii_admin_user_session");
     setUser(null);
     setIsAuthenticated(false);
   };

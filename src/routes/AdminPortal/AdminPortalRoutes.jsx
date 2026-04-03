@@ -20,7 +20,12 @@ import TenantDetails from "../../pages/AdminPortal/TenantDetails";
 // Helper function to convert absolute paths to relative paths for nested routes
 const toRelativePath = (path) => {
   if (!path) return path;
-  return path.startsWith("/") ? path.substring(1) : path;
+  // Skip external URLs and relative paths
+  if (path.includes("://") || path.startsWith("#")) return path;
+  // Remove leading slash and portal prefix
+  return path.startsWith("/")
+    ? path.substring(1).split("/").slice(1).join("/")
+    : path;
 };
 
 const AdminPortalRoutes = () => {
@@ -138,10 +143,7 @@ const AdminPortalRoutes = () => {
           </ProtectedRoute>
         }
       />
-      <Route
-        path="*"
-        element={<Navigate to={toRelativePath(ROUTE.LOGIN)} replace />}
-      />
+      <Route path="*" element={<Navigate to={ROUTE.LOGIN} replace />} />
     </Routes>
   );
 };
