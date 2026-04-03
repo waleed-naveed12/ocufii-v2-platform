@@ -1,0 +1,31 @@
+export const APIROUTES = {
+  Login: "/api/auth/platform-login",
+  GET_RESELLERS: "/admin/resellers",
+  GET_USERS: "/admin/tenants",
+  ADD_RESELLERS: "/admin/resellers",
+  GET_PLATFORM_USERS: "/admin/platform-users",
+  ADD_PLATFORM_ADMIN: "/admin/platform-users",
+  GET_SYSTEM_PERMISSIONS: "/admin/system-permissions",
+  UPDATE_SYSTEM_PERMISSIONS: (permissionId) =>
+    `/admin/system-permissions/${permissionId}`,
+  CHANGE_ADMIN_STATUS: (adminId) => `/admin/platform-users/${adminId}/status`,
+  DELETE_PLATFORM_ADMIN: (adminId) => `/admin/platform-users/${adminId}`,
+  UPDATE_PASSWORD: "/admin/me/password",
+  GET_USER_FEATURE: (adminId) => `/admin/platform-users/${adminId}/features`,
+  GET_PERMISSIONS: "/admin/permissions",
+  UPDATE_USER_FEATURE: (adminId) =>
+    `/admin/platform-users/${adminId}/permissions`,
+  GET_RESELLER_PERMISSIONS_LIST: "/admin/reseller-assignable-Lists",
+  DELETE_RESELLER: (resellerId) => `/admin/resellers/${resellerId}`,
+  UPDATE_RESELLER: (resellerId) => `/admin/resellers/${resellerId}`,
+  UPDATE_RESELLER_STATUS: (resellerId) =>
+    `/admin/resellers/${resellerId}/status`,
+  GET_ADMIN_TENANTS: `/admin/tenants`,
+  GET_RESELLER_TENANTS: "/reseller/my-tenants",
+  GET_RESELLERS_LIST: "/admin/resellers/list",
+  MOVE_TENANT: (tenantId) => `/admin/tenants/${tenantId}/reseller`,
+  CREATE_TENANT: "/reseller/my-tenants",
+  GET_RESELLER_FEATURE_PERMISSIONS: "/reseller/my-features-permissions",
+  UPDATE_TENANT: (tenantId) => `/reseller/my-tenants/${tenantId}`,
+  DELETE_TENANT: (tenantId) => `/reseller/my-tenants/${tenantId}`,
+};
