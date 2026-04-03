@@ -1,4 +1,4 @@
-import { useUser } from "../../context/CustomerPortal/UserContext";
+import { useUser } from "../../context/AdminPortal/UserContext";
 
 /**
  * Custom hook for authentication and authorization
