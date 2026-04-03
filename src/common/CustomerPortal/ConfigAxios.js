@@ -38,8 +38,8 @@ api.interceptors.response.use(
   (error) => {
     if (error.response && error.response.status === 401) {
       // Token expired or invalid - clear this tab's session
-      sessionStorage.removeItem("ocufii_auth_token");
-      sessionStorage.removeItem("ocufii_user_session");
+      sessionStorage.removeItem("ocufii_customer_auth_token");
+      sessionStorage.removeItem("ocufii_customer_user_session");
 
       // With HashRouter the route lives in window.location.hash (#/login)
       const isOnLogin = window.location.hash.includes("/login");

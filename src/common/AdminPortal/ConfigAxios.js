@@ -40,8 +40,8 @@ api.interceptors.response.use(
       );
 
       // Token expired or invalid - clear this tab's session
-      sessionStorage.removeItem("ocufii_auth_token");
-      sessionStorage.removeItem("ocufii_user_session");
+      sessionStorage.removeItem("ocufii_admin_auth_token");
+      sessionStorage.removeItem("ocufii_admin_user_session");
 
       // Redirect to login page if not already there
       if (window.location.pathname !== "/login") {
