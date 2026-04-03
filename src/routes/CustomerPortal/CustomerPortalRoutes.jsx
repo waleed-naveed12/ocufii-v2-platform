@@ -27,12 +27,6 @@ import Settings from "../../pages/CustomerPortal/Settings";
 import Map from "../../pages/CustomerPortal/Map";
 import { LoadingContainer } from "../../styles/CustomerPortal/App.styled";
 
-// Helper function to convert absolute paths to relative paths for nested routes
-const toRelativePath = (path) => {
-  if (!path) return path;
-  return path.startsWith("/") ? path.substring(1) : path;
-};
-
 const CustomerPortalRoutes = () => {
   const { isAuthenticated, isLoading } = useUser();
 
@@ -42,11 +36,11 @@ const CustomerPortalRoutes = () => {
 
   return (
     <Routes>
-      <Route path={toRelativePath(ROUTE.LOGIN)} element={<Login />} />
-      <Route path={toRelativePath(ROUTE.FORGOT_PASSWORD)} element={<ForgotPassword />} />
-      <Route path={toRelativePath(ROUTE.RESET_PASSWORD)} element={<ResetPassword />} />
+      <Route path={ROUTE.LOGIN} element={<Login />} />
+      <Route path={ROUTE.FORGOT_PASSWORD} element={<ForgotPassword />} />
+      <Route path={ROUTE.RESET_PASSWORD} element={<ResetPassword />} />
       <Route
-        path={toRelativePath(ROUTE.DASHBOARD)}
+        path={ROUTE.DASHBOARD}
         element={
           <ProtectedRoute>
             <Dashboard />
@@ -54,7 +48,7 @@ const CustomerPortalRoutes = () => {
         }
       />
       <Route
-        path={toRelativePath(ROUTE.ALERT)}
+        path={ROUTE.ALERT}
         element={
           <ProtectedRoute>
             <Alerts />
@@ -62,7 +56,7 @@ const CustomerPortalRoutes = () => {
         }
       />
       <Route
-        path={toRelativePath(ROUTE.ALERT_DETAILS)}
+        path={ROUTE.ALERT_DETAILS}
         element={
           <ProtectedRoute>
             <AlertDetails />
@@ -70,7 +64,7 @@ const CustomerPortalRoutes = () => {
         }
       />
       <Route
-        path={toRelativePath(ROUTE.SAFETY_NETWORK)}
+        path={ROUTE.SAFETY_NETWORK}
         element={
           <ProtectedRoute>
             <SafetyNetwork />
@@ -78,7 +72,7 @@ const CustomerPortalRoutes = () => {
         }
       />
       <Route
-        path={toRelativePath(ROUTE.DEVICES)}
+        path={ROUTE.DEVICES}
         element={
           <ProtectedRoute>
             <Devices />
@@ -86,7 +80,7 @@ const CustomerPortalRoutes = () => {
         }
       />
       <Route
-        path={toRelativePath(ROUTE.HISTORY)}
+        path={ROUTE.HISTORY}
         element={
           <ProtectedRoute>
             <History />
@@ -94,7 +88,7 @@ const CustomerPortalRoutes = () => {
         }
       />
       <Route
-        path={toRelativePath(ROUTE.RECIPIENTS)}
+        path={ROUTE.RECIPIENTS}
         element={
           <ProtectedRoute>
             <Recipients />
@@ -102,17 +96,17 @@ const CustomerPortalRoutes = () => {
         }
       />
       <Route
-        path={toRelativePath(ROUTE.ADD_RECIPIENT)}
+        path={ROUTE.ADD_RECIPIENT}
         element={
           <ProtectedRoute>
             <AddRecipient />
           </ProtectedRoute>
         }
       />
-      <Route path={toRelativePath(ROUTE.RESEND_EMAIL)} element={<ResendEmail />} />
-      <Route path={toRelativePath(ROUTE.EMAIL_VERIFIED)} element={<EmailVerified />} />
+      <Route path={ROUTE.RESEND_EMAIL} element={<ResendEmail />} />
+      <Route path={ROUTE.EMAIL_VERIFIED} element={<EmailVerified />} />
       <Route
-        path={toRelativePath(ROUTE.INVITE_CONTACT)}
+        path={ROUTE.INVITE_CONTACT}
         element={
           <ProtectedRoute>
             <InviteContact />
@@ -120,7 +114,7 @@ const CustomerPortalRoutes = () => {
         }
       />
       <Route
-        path={toRelativePath(ROUTE.PERSONAL_SAFETY)}
+        path={ROUTE.PERSONAL_SAFETY}
         element={
           <ProtectedRoute>
             <PersonalSafetyService />
@@ -128,7 +122,7 @@ const CustomerPortalRoutes = () => {
         }
       />
       <Route
-        path={toRelativePath(ROUTE.ACCEPT_INVITE)}
+        path={ROUTE.ACCEPT_INVITE}
         element={
           <ProtectedRoute>
             <AcceptInvite />
@@ -136,7 +130,7 @@ const CustomerPortalRoutes = () => {
         }
       />
       <Route
-        path={toRelativePath(ROUTE.SHOP)}
+        path={ROUTE.SHOP}
         element={
           <ProtectedRoute>
             <Shop />
@@ -144,7 +138,7 @@ const CustomerPortalRoutes = () => {
         }
       />
       <Route
-        path={toRelativePath(ROUTE.HELP)}
+        path={ROUTE.HELP}
         element={
           <ProtectedRoute>
             <Help />
@@ -152,7 +146,7 @@ const CustomerPortalRoutes = () => {
         }
       />
       <Route
-        path={toRelativePath(ROUTE.DEVICEDETAILS)}
+        path={ROUTE.DEVICEDETAILS}
         element={
           <ProtectedRoute>
             <DeviceDetails />
@@ -160,7 +154,7 @@ const CustomerPortalRoutes = () => {
         }
       />
       <Route
-        path={toRelativePath(ROUTE.ACCOUNT)}
+        path={ROUTE.ACCOUNT}
         element={
           <ProtectedRoute>
             <Account />
@@ -168,7 +162,7 @@ const CustomerPortalRoutes = () => {
         }
       />
       <Route
-        path={toRelativePath(ROUTE.SETTINGS)}
+        path={ROUTE.SETTINGS}
         element={
           <ProtectedRoute>
             <Settings />
@@ -176,7 +170,7 @@ const CustomerPortalRoutes = () => {
         }
       />
       <Route
-        path={toRelativePath(ROUTE.MAP)}
+        path={ROUTE.MAP}
         element={
           <ProtectedRoute>
             <Map />
@@ -187,7 +181,7 @@ const CustomerPortalRoutes = () => {
         path="*"
         element={
           <Navigate
-            to={toRelativePath(isAuthenticated ? ROUTE.DASHBOARD : ROUTE.LOGIN)}
+            to={isAuthenticated ? ROUTE.DASHBOARD : ROUTE.LOGIN}
             replace
           />
         }

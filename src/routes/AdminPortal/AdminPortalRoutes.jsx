@@ -17,18 +17,12 @@ import ResellerDetailView from "../../pages/AdminPortal/ResellerDetailView";
 import Tenants from "../../pages/AdminPortal/Tenants";
 import TenantDetails from "../../pages/AdminPortal/TenantDetails";
 
-// Helper function to convert absolute paths to relative paths for nested routes
-const toRelativePath = (path) => {
-  if (!path) return path;
-  return path.startsWith("/") ? path.substring(1) : path;
-};
-
 const AdminPortalRoutes = () => {
   return (
     <Routes>
-      <Route path={toRelativePath(ROUTE.LOGIN)} element={<Login />} />
+      <Route path={ROUTE.LOGIN} element={<Login />} />
       <Route
-        path={toRelativePath(ROUTE.DASHBOARD)}
+        path={ROUTE.DASHBOARD}
         element={
           <ProtectedRoute allowedRoles={ROUTE_PERMISSIONS.DASHBOARD}>
             <DashboardLayout>
@@ -38,7 +32,7 @@ const AdminPortalRoutes = () => {
         }
       />
       <Route
-        path={toRelativePath(ROUTE.USERS)}
+        path={ROUTE.USERS}
         element={
           <ProtectedRoute allowedRoles={ROUTE_PERMISSIONS.USERS}>
             <DashboardLayout>
@@ -48,7 +42,7 @@ const AdminPortalRoutes = () => {
         }
       />
       <Route
-        path={toRelativePath(ROUTE.RESELLER)}
+        path={ROUTE.RESELLER}
         element={
           <ProtectedRoute allowedRoles={ROUTE_PERMISSIONS.RESELLER}>
             <DashboardLayout>
@@ -58,7 +52,7 @@ const AdminPortalRoutes = () => {
         }
       />
       <Route
-        path={toRelativePath(ROUTE.RESELLER_DETAIL)}
+        path={ROUTE.RESELLER_DETAIL}
         element={
           <ProtectedRoute allowedRoles={ROUTE_PERMISSIONS.RESELLER_DETAIL}>
             <DashboardLayout>
@@ -68,7 +62,7 @@ const AdminPortalRoutes = () => {
         }
       />
       <Route
-        path={toRelativePath(ROUTE.TENANTS)}
+        path={ROUTE.TENANTS}
         element={
           <ProtectedRoute allowedRoles={ROUTE_PERMISSIONS.TENANTS}>
             <DashboardLayout>
@@ -78,7 +72,7 @@ const AdminPortalRoutes = () => {
         }
       />
       <Route
-        path={toRelativePath(ROUTE.TENANT_DETAILS)}
+        path={ROUTE.TENANT_DETAILS}
         element={
           <ProtectedRoute allowedRoles={ROUTE_PERMISSIONS.TENANT_DETAILS}>
             <DashboardLayout>
@@ -89,7 +83,7 @@ const AdminPortalRoutes = () => {
       />
 
       <Route
-        path={toRelativePath(ROUTE.DEACTIVATE_ACCOUNT)}
+        path={ROUTE.DEACTIVATE_ACCOUNT}
         element={
           <ProtectedRoute allowedRoles={ROUTE_PERMISSIONS.DEACTIVATE_ACCOUNT}>
             <DashboardLayout>
@@ -99,7 +93,7 @@ const AdminPortalRoutes = () => {
         }
       />
       <Route
-        path={toRelativePath(ROUTE.USER_DETAIL)}
+        path={ROUTE.USER_DETAIL}
         element={
           <ProtectedRoute allowedRoles={ROUTE_PERMISSIONS.USER_DETAIL}>
             <DashboardLayout>
@@ -109,7 +103,7 @@ const AdminPortalRoutes = () => {
         }
       />
       <Route
-        path={toRelativePath(ROUTE.SYSTEM)}
+        path={ROUTE.SYSTEM}
         element={
           <ProtectedRoute allowedRoles={ROUTE_PERMISSIONS.SYSTEM}>
             <DashboardLayout>
@@ -119,7 +113,7 @@ const AdminPortalRoutes = () => {
         }
       />
       <Route
-        path={toRelativePath(ROUTE.SETTINGS)}
+        path={ROUTE.SETTINGS}
         element={
           <ProtectedRoute allowedRoles={ROUTE_PERMISSIONS.SETTINGS}>
             <DashboardLayout>
@@ -129,7 +123,7 @@ const AdminPortalRoutes = () => {
         }
       />
       <Route
-        path={toRelativePath(ROUTE.PASSWORD)}
+        path={ROUTE.PASSWORD}
         element={
           <ProtectedRoute allowedRoles={ROUTE_PERMISSIONS.PASSWORD}>
             <DashboardLayout>
@@ -140,7 +134,7 @@ const AdminPortalRoutes = () => {
       />
       <Route
         path="*"
-        element={<Navigate to={toRelativePath(ROUTE.LOGIN)} replace />}
+        element={<Navigate to={ROUTE.LOGIN} replace />}
       />
     </Routes>
   );
