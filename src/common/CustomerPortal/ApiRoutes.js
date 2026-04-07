@@ -69,4 +69,9 @@ export const APIROUTES = {
   CHANGE_PASSWORD_EMAIL: "/Email/ChangePassword",
   CHANGE_PASSWORD_DIRECT: "/Email/ChangePasswordDirect",
   RESET_PASSWORD: "/OcufiiDynamoDB/ForgotPassword",
+  GET_TOS_ITEM: "/OcufiiDynamoDB/TermOfServiceItem",
+  ACCEPT_TOS: "/OcufiiDynamoDB/AcceptTermsOfService",
+  GENERATE_TOKEN: "/OcufiiDynamoDB/GenerateToken",
+  VERIFY_EMAIL_SIGNUP: "/Email/VerifyEmail",
+  WEBSIGNUP: "/OcufiiDynamoDB/WebSignUp",
 };

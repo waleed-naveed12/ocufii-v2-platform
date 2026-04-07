@@ -1,3 +1,4 @@
+import axios from "axios";
 import api from "../../common/CustomerPortal/ConfigAxios";
 import { APIROUTES } from "../../common/CustomerPortal/ApiRoutes";
 
@@ -83,4 +84,83 @@ export const resetPasswordAPI = async ({ email, newPassword }) => {
 export const logoutAPI = async () => {
   // Implement logout API call if backend supports it
   return Promise.resolve();
+};
+
+export const getTOSItem = async () => {
+  const response = await api.get(APIROUTES.GET_TOS_ITEM);
+  return response.data;
+};
+
+export const acceptTOS = async (email) => {
+  const response = await api.post(APIROUTES.ACCEPT_TOS, {
+    email,
+    accepted: true,
+  });
+  return response.data;
+};
+
+/**
+ * Generates a short-lived service token for unauthenticated operations (e.g. signup).
+ * Credentials are read from window config (public/config.js).
+ */
+export const generateSignUpToken = async () => {
+  const response = await axios.post(
+    `${window.CustomerPortalBaseAPIURL}${APIROUTES.GENERATE_TOKEN}`,
+    {
+      email: window.CustomerPortalAPIEmail,
+      password: window.CustomerPortalAPIPassword,
+      roleId: "3",
+    }
+  );
+  return response.data;
+};
+
+/**
+ * Sends a verification email for a new signup.
+ * Uses a service token (not the user's session token) as Bearer.
+ */
+export const verifyEmailForSignUp = async (email, bearerToken) => {
+  const response = await axios.post(
+    `${window.CustomerPortalBaseAPIURL}${APIROUTES.VERIFY_EMAIL_SIGNUP}`,
+    { email },
+    {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${bearerToken}`,
+      },
+    }
+  );
+  return response.data;
+};
+
+/**
+ * Fetches TOS content without a user session (sign-up flow).
+ */
+export const getTOSItemPublic = async (bearerToken) => {
+  const response = await axios.get(
+    `${window.CustomerPortalBaseAPIURL}${APIROUTES.GET_TOS_ITEM}`,
+    { headers: { Authorization: `Bearer ${bearerToken}` } },
+  );
+  return response.data;
+};
+
+/**
+ * Creates a new user account (web sign-up flow).
+ * Uses a service token as Bearer since the user is not yet authenticated.
+ */
+export const webSignUpAPI = async (
+  { email, fullName, password, isAdult, tosAccepted },
+  bearerToken,
+) => {
+  const response = await axios.post(
+    `${window.CustomerPortalBaseAPIURL}${APIROUTES.WEBSIGNUP}`,
+    { email, fullName, password, isAdult, tosAccepted },
+    {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${bearerToken}`,
+      },
+    },
+  );
+  return response.data;
 };

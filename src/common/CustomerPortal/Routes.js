@@ -21,4 +21,7 @@ export const ROUTE = {
   MAP: "/customerportal/map",
   FORGOT_PASSWORD: "/customerportal/forgot-password",
   RESET_PASSWORD: "/customerportal/reset-password",
+  SIGN_UP: "/customerportal/signup",
+  ACCOUNT_SETUP: "/customerportal/account_setup",
+  TERMS_OF_SERVICE_SIGNUP: "/customerportal/terms_of_service_signup",
 };

@@ -12,6 +12,8 @@ import {
 import {
   forgotPasswordAPI,
   changePasswordEmailAPI,
+  generateSignUpToken,
+  verifyEmailForSignUp,
 } from "../../../api/CustomerPortal/AuthApi";
 import { deleteGatewayEmailAPI } from "../../../api/CustomerPortal/DevicesApi";
 import Toast from "../../../utility/CustomerPortal/Toast";
@@ -62,30 +64,34 @@ const ResendEmail = () => {
   const { t, i18n } = useTranslation();
   const [language, setLanguage] = useState(i18n.language || "en");
 
-  const flow = location.state?.flow; // "addRecipient" | "updateRecipient" | "forgotPassword" | "changePassword" | undefined
+  const flow = location.state?.flow; // "addRecipient" | "updateRecipient" | "forgotPassword" | "changePassword" | "signUp" | undefined
   const message = location.state?.message;
   const isForgotPasswordFlow = flow === "forgotPassword";
   const isChangePasswordFlow = flow === "changePassword";
   const isDeleteGatewayFlow = flow === "deleteGateway";
   const isAddRecipientFlow =
     flow === "addRecipient" || flow === "updateRecipient";
+  const isSignUpFlow = flow === "signUp";
 
-  // For forgotPassword flow, we use the email typed by the user (not the logged-in user)
+  // For forgotPassword / signUp flow, we use the email typed by the user (not the logged-in user)
   const forgotEmail =
     location.state?.forgotEmail ||
     sessionStorage.getItem("pendingForgotPasswordEmail") ||
     "";
-  const pollingEmail = isForgotPasswordFlow ? forgotEmail : user?.email;
-  // category: 3=forgotPassword, 4=changePassword, 6=deleteGateway, 8=addRecipient, 11=safetyNetwork
-  const pollingCategory = isForgotPasswordFlow
-    ? 3
-    : isChangePasswordFlow
-      ? 4
-      : isDeleteGatewayFlow
-        ? 6
-        : isAddRecipientFlow
-          ? 8
-          : 11;
+  const pollingEmail =
+    isForgotPasswordFlow || isSignUpFlow ? forgotEmail : user?.email;
+  // category: 1=signUp, 3=forgotPassword, 4=changePassword, 6=deleteGateway, 8=addRecipient, 11=safetyNetwork
+  const pollingCategory = isSignUpFlow
+    ? 1
+    : isForgotPasswordFlow
+      ? 3
+      : isChangePasswordFlow
+        ? 4
+        : isDeleteGatewayFlow
+          ? 6
+          : isAddRecipientFlow
+            ? 8
+            : 11;
 
   // InviteContact flow data
   const pendingInvite = JSON.parse(
@@ -126,11 +132,13 @@ const ResendEmail = () => {
 
     // For forgotPassword: email was already sent from ForgotPassword screen; just poll.
     // For changePassword: email was already sent from ChangePassword screen; just poll.
+    // For signUp: email was already sent from SignUp screen; just poll.
     // For other flows: send the email once on mount.
     if (
       !isForgotPasswordFlow &&
       !isChangePasswordFlow &&
       !isDeleteGatewayFlow &&
+      !isSignUpFlow &&
       !hasSentRef.current
     ) {
       hasSentRef.current = true;
@@ -161,6 +169,11 @@ const ResendEmail = () => {
         result = await deleteGatewayEmailAPI(pollingEmail);
       } else if (isAddRecipientFlow) {
         result = await sendAddRecipientEmail(pollingEmail);
+      } else if (isSignUpFlow) {
+        const tokenData = await generateSignUpToken();
+        const serviceToken =
+          tokenData?.access_token || tokenData?.access_Token;
+        result = await verifyEmailForSignUp(pollingEmail, serviceToken);
       } else {
         result = await inviteSafetyMember(pollingEmail);
       }
@@ -213,7 +226,7 @@ const ResendEmail = () => {
     </EmailContainer>
   );
 
-  if (isForgotPasswordFlow) {
+  if (isForgotPasswordFlow || isSignUpFlow) {
     return (
       <LoginContainer>
         <Header>

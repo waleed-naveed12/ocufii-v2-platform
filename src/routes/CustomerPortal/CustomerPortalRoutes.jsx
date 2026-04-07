@@ -17,6 +17,9 @@ import SafetyNetwork from "../../pages/CustomerPortal/SafetyNetwork";
 import Recipients from "../../pages/CustomerPortal/Recipients";
 import ResendEmail from "../../pages/CustomerPortal/email/ResendEmail";
 import EmailVerified from "../../pages/CustomerPortal/email/EmailVerified";
+import SignUp from "../../pages/CustomerPortal/auth/SignUp";
+import AccountSetup from "../../pages/CustomerPortal/auth/AccountSetup";
+import TermsOfServiceSignUp from "../../pages/CustomerPortal/auth/TermsOfServiceSignUp";
 import InviteContact from "../../pages/CustomerPortal/safetyNetwork/InviteContact";
 import Account from "../../pages/CustomerPortal/Account";
 import PersonalSafetyService from "../../pages/CustomerPortal/PersonalSafetyService";
@@ -48,6 +51,9 @@ const CustomerPortalRoutes = () => {
   return (
     <Routes>
       <Route path={toRelativePath(ROUTE.LOGIN)} element={<Login />} />
+      <Route path={toRelativePath(ROUTE.SIGN_UP)} element={<SignUp />} />
+      <Route path={toRelativePath(ROUTE.ACCOUNT_SETUP)} element={<AccountSetup />} />
+      <Route path={toRelativePath(ROUTE.TERMS_OF_SERVICE_SIGNUP)} element={<TermsOfServiceSignUp />} />
       <Route
         path={toRelativePath(ROUTE.FORGOT_PASSWORD)}
         element={<ForgotPassword />}

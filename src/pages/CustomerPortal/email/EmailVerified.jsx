@@ -49,12 +49,13 @@ const EmailVerified = () => {
   const { t, i18n } = useTranslation();
   const [language, setLanguage] = useState(i18n.language || "en");
 
-  const flow = location.state?.flow; // "addRecipient" | "updateRecipient" | "forgotPassword" | "changePassword" | undefined
+  const flow = location.state?.flow; // "addRecipient" | "updateRecipient" | "forgotPassword" | "changePassword" | "signUp" | undefined
   const isAddRecipientFlow = flow === "addRecipient";
   const isUpdateRecipientFlow = flow === "updateRecipient";
   const isForgotPasswordFlow = flow === "forgotPassword";
   const isChangePasswordFlow = flow === "changePassword";
   const isDeleteGatewayFlow = flow === "deleteGateway";
+  const isSignUpFlow = flow === "signUp";
 
   // InviteContact flow data
   const pendingInvite = JSON.parse(
@@ -65,23 +66,39 @@ const EmailVerified = () => {
   const recipientName =
     location.state?.recipientName || pendingInvite?.recipientName;
 
+  const signUpEmail =
+    location.state?.forgotEmail ||
+    sessionStorage.getItem("pendingSignUpEmail") ||
+    "";
+
   const message =
     location.state?.message ||
-    (isChangePasswordFlow
+    (isSignUpFlow
       ? {
           line1:
-            "Your email has been confirmed and your password has been changed.",
-          line2: 'Click "Continue" to access your account.',
+            "Your email has been confirmed. Click \u2018Continue\u2019 to finish creating your account.",
+          line2: "",
         }
-      : {
-          line1:
-            "Your email has been confirmed, and your contact has been successfully invited to your Safety Network list.",
-          line2: 'Click "Continue" to finish setting up your alert members.',
-        });
+      : isChangePasswordFlow
+        ? {
+            line1:
+              "Your email has been confirmed and your password has been changed.",
+            line2: 'Click "Continue" to access your account.',
+          }
+        : {
+            line1:
+              "Your email has been confirmed, and your contact has been successfully invited to your Safety Network list.",
+            line2: 'Click "Continue" to finish setting up your alert members.',
+          });
 
   const handleContinue = async () => {
     setIsContinuing(true);
     try {
+      if (isSignUpFlow) {
+        navigate(ROUTE.ACCOUNT_SETUP, { state: { signUpEmail } });
+        return;
+      }
+
       if (isForgotPasswordFlow) {
         navigate(ROUTE.RESET_PASSWORD);
         return;
@@ -211,7 +228,7 @@ const EmailVerified = () => {
     </EmailContainer>
   );
 
-  if (isForgotPasswordFlow) {
+  if (isForgotPasswordFlow || isSignUpFlow) {
     return (
       <LoginContainer>
         <Header>

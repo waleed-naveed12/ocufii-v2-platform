@@ -45,9 +45,11 @@ import { useNavigate } from "react-router-dom";
 import { ROUTE } from "../../common/CustomerPortal/Routes";
 import { useTranslation } from "react-i18next";
 import { PageTitle } from "../../styles/CustomerPortal/SafetyNetwork.styled";
+import { getTOSItem, acceptTOS } from "../../api/CustomerPortal/AuthApi";
+import TermsOfServiceModal from "../../components/CustomerPortal/TermsOfServiceModal/TermsOfServiceModal";
 
 const Dashboard = () => {
-  const { user } = useUser();
+  const { user, updateUser } = useUser();
   const navigate = useNavigate();
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [selectedAlert, setSelectedAlert] = useState(null);
@@ -61,6 +63,9 @@ const Dashboard = () => {
   const [currentSenderEmail, setCurrentSenderEmail] = useState(null);
   const [timeRange, setTimeRange] = useState("24 Hours");
   const [alertActionAlert, setAlertActionAlert] = useState(null);
+  const [showTOSModal, setShowTOSModal] = useState(false);
+  const [tosContent, setTosContent] = useState("");
+  const [isAcceptingTOS, setIsAcceptingTOS] = useState(false);
   const timerRef = useRef(null);
   const fetchIntervalRef = useRef(null);
   const { t } = useTranslation();
@@ -284,6 +289,29 @@ const Dashboard = () => {
     }
   }, [isError, error]);
 
+  // Check TOS acceptance on mount
+  useEffect(() => {
+    if (user?.tosAccepted === false) {
+      getTOSItem().then((data) => {
+        setTosContent(data.termOfService);
+        setShowTOSModal(true);
+      });
+    }
+  }, []);
+
+  const handleAcceptTOS = async () => {
+    setIsAcceptingTOS(true);
+    try {
+      await acceptTOS(user.email);
+      updateUser({ tosAccepted: true });
+      setShowTOSModal(false);
+    } catch {
+      Toast.error(t("login.errors.unexpectedError"));
+    } finally {
+      setIsAcceptingTOS(false);
+    }
+  };
+
   return (
     <DashboardLayout>
       <DashboardContent>
@@ -501,6 +529,13 @@ const Dashboard = () => {
           alert={alertActionAlert}
           onClose={() => setAlertActionAlert(null)}
           onRemoveAlert={handleRemoveAlert}
+        />
+      )}
+      {showTOSModal && (
+        <TermsOfServiceModal
+          tosContent={tosContent}
+          onAccept={handleAcceptTOS}
+          isAccepting={isAcceptingTOS}
         />
       )}
     </DashboardLayout>
