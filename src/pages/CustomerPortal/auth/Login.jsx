@@ -254,8 +254,19 @@ const Login = () => {
               >
                 {t("login.forgotPassword")}
               </Link>
-              {/* <span style={{ color: "#666" }}>|</span> */}
-              {/* <Link href="#request-access">Request Access</Link> */}
+              <Link
+                as="button"
+                type="button"
+                onClick={() => navigate(ROUTE.SIGN_UP)}
+                style={{
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  padding: 0,
+                }}
+              >
+                Don't have an account? Sign Up Here
+              </Link>
             </LinksContainer>
           </LoginForm>
         </LoginSection>

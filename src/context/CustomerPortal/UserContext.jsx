@@ -81,6 +81,16 @@ export const UserProvider = ({ children }) => {
     return sessionStorage.getItem(AUTH_TOKEN_KEY);
   };
 
+  const updateUser = (partialData) => {
+    try {
+      const updated = { ...user, ...partialData };
+      sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(updated));
+      setUser(updated);
+    } catch (error) {
+      console.error("Error updating user:", error);
+    }
+  };
+
   const value = {
     user,
     isAuthenticated,
@@ -88,6 +98,7 @@ export const UserProvider = ({ children }) => {
     login,
     logout,
     getAuthToken,
+    updateUser,
   };
 
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>;

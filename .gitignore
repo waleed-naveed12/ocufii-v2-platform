@@ -26,3 +26,4 @@ dist-ssr
 
 # Runtime config with API keys — never commit real values
 public/config.js
+.github/copilot-instructions.md
