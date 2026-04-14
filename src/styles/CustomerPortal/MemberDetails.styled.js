@@ -1,4 +1,21 @@
-import styled from "styled-components";
+import styled, { keyframes } from "styled-components";
+
+const spin = keyframes`
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+`;
+
+export const SpinnerIcon = styled.span`
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: ${spin} 0.7s linear infinite;
+  margin-left: 6px;
+  vertical-align: middle;
+`;
 export const Container = styled.div`
   padding: 20px;
   background: #f8f9fa;
@@ -114,8 +131,8 @@ export const ActionGroup = styled.div`
 `;
 
 export const SecondaryButton = styled.button`
-  background: ${(props) => (props.$isActive ? "#198754" : "#2b9cff")};
-  color: #fff;
+  background: ${(props) => (props.$isActive ? "#FB8C00" : "#2b9cff")};
+  color: ${(props) => (props.$isActive ? "#fff" : "#fff")};
   border: none;
   padding: 12px 32px;
   border-radius: 8px;
@@ -126,7 +143,7 @@ export const SecondaryButton = styled.button`
   width: 250px;
 
   &:hover {
-    background: ${(props) => (props.$isActive ? "#157347" : "#1a8ae6")};
+    background: ${(props) => (props.$isActive ? "#FB8C00" : "#1a8ae6")};
   }
 
   &:disabled {
@@ -136,8 +153,8 @@ export const SecondaryButton = styled.button`
 `;
 
 export const UnlinkButton = styled.button`
-  background: ${(props) => (props.$isActive ? "#6c757d" : "#dc3545")};
-  color: #fff;
+  background: ${(props) => (props.$isActive ? "#FB8C00" : "#dc3545")};
+  color: ${(props) => (props.$isActive ? "#fff" : "#fff")};
   border: none;
   padding: 14px 40px;
   border-radius: 8px;
@@ -149,7 +166,7 @@ export const UnlinkButton = styled.button`
   width: 500px;
 
   &:hover {
-    background: ${(props) => (props.$isActive ? "#5a6268" : "#b02a37")};
+    background: ${(props) => (props.$isActive ? "#FB8C00" : "#b02a37")};
   }
 
   &:disabled {

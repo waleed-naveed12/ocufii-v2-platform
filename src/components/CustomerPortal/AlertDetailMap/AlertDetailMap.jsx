@@ -64,6 +64,8 @@ const AlertDetailMap = ({
 
   // Global registry for button functions to ensure they persist
   const buttonFunctionsRef = useRef({});
+  // Maps helperEmail → recipientId as assigned in displayRecipients (uses eligibleRecipients index)
+  const recipientIdByEmailRef = useRef({});
 
   // LocalStorage key for assist message responses
   const ASSIST_MESSAGES_KEY = "ocufii_assist_messages";
@@ -76,7 +78,7 @@ const AlertDetailMap = ({
       return getAssistRequestStatus(selectedAlert?.id);
     },
     enabled: shouldPollStatus && !!selectedAlert?.id,
-    refetchInterval: shouldPollStatus ? 30000 : false,
+    refetchInterval: shouldPollStatus ? 20000 : false,
     refetchIntervalInBackground: true,
     staleTime: 0,
   });
@@ -246,16 +248,90 @@ const AlertDetailMap = ({
       console.log("[Assist Status Update] Data changed, processing updates");
       previousAssistStatusRef.current = currentDataString;
 
-      assistStatusData.requests.forEach((recipientRequest) => {
+      // Deduplicate requests by helperEmail — keep the highest-priority status so a
+      // stale "Declined" entry from an earlier request never overwrites a later "Accepted"
+      const STATUS_PRIORITY = { Accepted: 3, Pending: 2, Declined: 1, Rejected: 1 };
+      const bestByEmail = {};
+      assistStatusData.requests.forEach((req) => {
+        const priority = STATUS_PRIORITY[req.status] ?? 0;
+        if (
+          !bestByEmail[req.helperEmail] ||
+          priority > (STATUS_PRIORITY[bestByEmail[req.helperEmail].status] ?? 0)
+        ) {
+          bestByEmail[req.helperEmail] = req;
+        }
+      });
+      const deduplicatedRequests = Object.values(bestByEmail);
+
+      deduplicatedRequests.forEach((recipientRequest) => {
         console.log(
           "[Button Update] Processing recipient:",
           recipientRequest.helperEmail,
           "Status:",
           recipientRequest.status,
         );
-        // Store the eventId for later use
-        recipientEventIdsRef.current[recipientRequest.helperEmail] =
-          recipientRequest.eventId;
+        // Only update the ref for non-declined statuses — a stale declined eventId
+        // must never overwrite a newer eventId that was stored by a resent request
+        if (
+          recipientRequest.status !== "Declined" &&
+          recipientRequest.status !== "Rejected"
+        ) {
+          recipientEventIdsRef.current[recipientRequest.helperEmail] =
+            recipientRequest.eventId;
+        }
+
+        // If declined/rejected, clear ref and localStorage ONLY when the stored
+        // eventId matches the declined one — this prevents wiping a fresh resend's
+        // eventId if the API returns both the old declined and the new accepted
+        // request in the same polling response
+        if (
+          recipientRequest.status === "Declined" ||
+          recipientRequest.status === "Rejected"
+        ) {
+          try {
+            const stored = localStorage.getItem(ASSIST_MESSAGES_KEY);
+            if (stored) {
+              const assistMessages = JSON.parse(stored);
+              if (
+                assistMessages[selectedAlert.id]?.[
+                  recipientRequest.helperEmail
+                ]
+              ) {
+                const storedEntry =
+                  assistMessages[selectedAlert.id][
+                    recipientRequest.helperEmail
+                  ];
+                const storedEventId =
+                  storedEntry.eventId ||
+                  storedEntry.results?.[0]?.eventId;
+                if (storedEventId === recipientRequest.eventId) {
+                  delete assistMessages[selectedAlert.id][
+                    recipientRequest.helperEmail
+                  ];
+                  localStorage.setItem(
+                    ASSIST_MESSAGES_KEY,
+                    JSON.stringify(assistMessages),
+                  );
+                  console.log(
+                    "[Assist Status] Cleared localStorage eventId for declined recipient:",
+                    recipientRequest.helperEmail,
+                  );
+                }
+              }
+            }
+            // Clear ref only if it still holds the declined eventId
+            if (
+              recipientEventIdsRef.current[recipientRequest.helperEmail] ===
+              recipientRequest.eventId
+            ) {
+              delete recipientEventIdsRef.current[
+                recipientRequest.helperEmail
+              ];
+            }
+          } catch (err) {
+            console.error("[Assist Status] Error clearing localStorage:", err);
+          }
+        }
 
         // Update recipient status in Dashboard state for all statuses
         if (onUpdateRecipientStatus) {
@@ -274,11 +350,16 @@ const AlertDetailMap = ({
         // Update the popup with the current status
         const status = recipientRequest.status;
 
-        // Find the recipient index from selectedAlert.recipients
-        const recipientIndex = selectedAlert.recipients?.findIndex(
-          (r) => r.email === recipientRequest.helperEmail,
-        );
-        const recipientId = `${selectedAlert.id}_${recipientIndex}`;
+        // Look up the recipientId that displayRecipients assigned (uses eligibleRecipients index).
+        // Fall back to selectedAlert.recipients index only if displayRecipients hasn't run yet.
+        const recipientId =
+          recipientIdByEmailRef.current[recipientRequest.helperEmail] ??
+          (() => {
+            const idx = selectedAlert.recipients?.findIndex(
+              (r) => r.email === recipientRequest.helperEmail,
+            );
+            return `${selectedAlert.id}_${idx}`;
+          })();
 
         const statusDiv = document.getElementById(`status-${sanitizedEmail}`);
         const popupId = `popup-${selectedAlert.id}-${sanitizedEmail}`;
@@ -441,7 +522,7 @@ const AlertDetailMap = ({
             }
           } else if (status === "Declined" || status === "Rejected") {
             // For declined, keep/show send message button, remove route buttons if they exist
-            const routeButtons = popupEl?.querySelector(".action-buttons");
+            const routeButtons = popupEl?.querySelector(`.route-buttons-${recipientId}`);
             if (routeButtons) {
               routeButtons.outerHTML = `
                 <button 
@@ -635,11 +716,16 @@ const AlertDetailMap = ({
           selectedAlert.id,
           recipientEmail,
         );
-        if (storedResponse && storedResponse.eventId) {
-          eventId = storedResponse.eventId;
-          // Also update the ref for future use
-          recipientEventIdsRef.current[recipientEmail] = eventId;
-          console.log("Retrieved eventId from localStorage:", eventId);
+        if (storedResponse) {
+          // Check both top-level eventId and nested results[0].eventId
+          eventId =
+            storedResponse.eventId ||
+            storedResponse.results?.[0]?.eventId;
+          if (eventId) {
+            // Also update the ref for future use
+            recipientEventIdsRef.current[recipientEmail] = eventId;
+            console.log("Retrieved eventId from localStorage:", eventId);
+          }
         }
       }
 
@@ -1784,6 +1870,7 @@ const AlertDetailMap = ({
       recipientEventIdsRef.current = {};
       recipientPopupsRef.current = {};
       previousAssistStatusRef.current = null;
+      recipientIdByEmailRef.current = {};
 
       // Increment map key to trigger map initialization useEffect
       setMapKey((prev) => prev + 1);
@@ -2361,6 +2448,8 @@ const AlertDetailMap = ({
 
         // Create global functions for buttons FIRST before setting up popup HTML
         const recipientId = `${selectedAlert.id}_${index}`;
+        // Register this mapping so the status update handler can find the same recipientId
+        recipientIdByEmailRef.current[recipient.email] = recipientId;
 
         // Define stable functions and store them in multiple places for reliability
         const showRouteFn = () => {
@@ -2391,10 +2480,10 @@ const AlertDetailMap = ({
           );
           try {
             shareRoute(
-              recipient.longitude,
-              recipient.latitude,
               selectedAlert.longitude,
               selectedAlert.latitude,
+              recipient.longitude,
+              recipient.latitude,
               recipient.email,
               recipient.name || "Recipient",
             );
@@ -2430,34 +2519,62 @@ const AlertDetailMap = ({
                 recipient.email,
                 response,
               );
-              // Also save eventId to ref if available
-              if (response.eventId) {
-                recipientEventIdsRef.current[recipient.email] =
-                  response.eventId;
+              // Extract eventId from top-level or nested results (same logic as restore)
+              let newEventId = response.eventId;
+              if (
+                !newEventId &&
+                response.results &&
+                response.results.length > 0
+              ) {
+                newEventId = response.results[0].eventId;
+              }
+              // Always overwrite the ref with the latest eventId so resends use the new one
+              if (newEventId) {
+                recipientEventIdsRef.current[recipient.email] = newEventId;
+                console.log(
+                  "[Send Message] Updated eventId for",
+                  recipient.email,
+                  "->",
+                  newEventId,
+                );
               }
             }
 
             // Update the popup to show pending status
+            const sanitizedEmailForId = recipient.email.replace(
+              /[^a-zA-Z0-9-_]/g,
+              "-",
+            );
             const popupEl = document.querySelector(
-              `.popup-${selectedAlert.id}-${recipient.email.replace(
-                /[^a-zA-Z0-9-_]/g,
-                "-",
-              )}`,
+              `.popup-${selectedAlert.id}-${sanitizedEmailForId}`,
             );
             if (popupEl) {
+              // Remove any stale status div from a previous Declined/Rejected attempt
+              const oldStatusDiv = document.getElementById(`status-${sanitizedEmailForId}`);
+              if (oldStatusDiv) {
+                oldStatusDiv.remove();
+              }
+
               const buttonContainer = popupEl.querySelector(
                 'button[onclick*="sendMessage"]',
               );
               if (buttonContainer) {
-                const sanitizedEmailForId = recipient.email.replace(
-                  /[^a-zA-Z0-9-_]/g,
-                  "-",
-                );
                 buttonContainer.outerHTML = `
                   <div id="status-${sanitizedEmailForId}" style="padding: 12px; background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%); color: white; border-radius: 6px; font-size: 14px; font-weight: 450; text-align: center; margin-bottom: 8px; width: 100%;">
                      Pending Response
                   </div>
                 `;
+              }
+
+              // Persist the updated popup HTML so reopening shows the correct state
+              const popup = recipientPopupsRef.current[recipient.email];
+              if (popup) {
+                const updatedHTML = popupEl.querySelector(
+                  ".mapboxgl-popup-content > div",
+                )?.outerHTML;
+                if (updatedHTML) {
+                  popup.setHTML(updatedHTML);
+                }
               }
             }
 

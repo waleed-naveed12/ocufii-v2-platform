@@ -19,6 +19,7 @@ import {
   SecondaryButton,
   UnlinkButton,
   Note,
+  SpinnerIcon,
 } from "../../styles/CustomerPortal/MemberDetails.styled";
 import safetAlertImg from "../../assets/CustomerPortal/images/safety2.png";
 import securityAlertImg from "../../assets/CustomerPortal/images/security2.png";
@@ -61,6 +62,8 @@ const MemberDetails = ({ member, outbound, inbound, onUnlink = () => {}, onUpdat
   const [activeStatus, setActiveStatus] = useState(inbound?.userStatus ?? null);
   const [pendingAction, setPendingAction] = useState(null); // { action, userStatus }
   const [notAllowedModal, setNotAllowedModal] = useState(null); // { message }
+  const [showTestAlertConfirm, setShowTestAlertConfirm] = useState(false);
+  const [testAlertStatus, setTestAlertStatus] = useState(null); // null | 'sending' | 'delivered' | 'failed'
 
   // Update state when outbound prop changes
   useEffect(() => {
@@ -145,11 +148,23 @@ const MemberDetails = ({ member, outbound, inbound, onUnlink = () => {}, onUpdat
     onUnlink(member);
   };
 
-  const handleSendTestAlert = async () => {
+  const handleSendTestAlert = () => {
     if (!onSendTestAlert) return;
+    setTestAlertStatus(null);
+    setShowTestAlertConfirm(true);
+  };
+
+  const handleConfirmTestAlert = async () => {
+    setShowTestAlertConfirm(false);
     setIsSendingAlert(true);
+    setTestAlertStatus('sending');
     try {
-      await onSendTestAlert();
+      const result = await onSendTestAlert();
+      // Use notificationStatus from the API response: 2 = delivered, 1 = failed
+      const notifStatus = result?.safetyLink?.notificationStatus;
+      setTestAlertStatus(notifStatus === 2 ? 'delivered' : 'failed');
+    } catch {
+      setTestAlertStatus('failed');
     } finally {
       setIsSendingAlert(false);
     }
@@ -241,6 +256,19 @@ const MemberDetails = ({ member, outbound, inbound, onUnlink = () => {}, onUpdat
   const isSafetyActive = inbound?.enableSafety;
   const isSecurityActive = inbound?.enableSecurity;
 
+  // Derive tag to show beside Send Test Alert button.
+  // Live testAlertStatus (from current session) takes priority; otherwise fall back to API's notificationStatus.
+  const displayTestAlertStatus =
+    testAlertStatus ??
+    (outbound?.notificationStatus === 2
+      ? "delivered"
+      : outbound?.notificationStatus === 1
+      ? "failed"
+      : null);
+
+  // Disable all settings (except Unlink/Relink) when Blocked, Snoozed, or Not Linked
+  const isRestricted = outbound?.userStatus === 3 || outbound?.userStatus === 5 || member.status === "NOT LINKED";
+
   // Show Unlink/Relink button only when:
   // - Status is not unlinked (show Unlink), OR
   // - Status is unlinked AND current user was the one who unlinked (unlinkedBy is empty or matches current user email)
@@ -317,6 +345,36 @@ const MemberDetails = ({ member, outbound, inbound, onUnlink = () => {}, onUpdat
           </ConfirmModal>
         </Overlay>
       )}
+      {showTestAlertConfirm && (
+        <Overlay>
+          <ConfirmModal role="dialog" aria-modal="true">
+            <ConfirmIcon>
+              <img src={warningIcon} alt="Warning" />
+            </ConfirmIcon>
+            <ConfirmTitle>SEND A TEST ALERT</ConfirmTitle>
+            <ConfirmMessage>
+              Are you sure you want to send a test alert to this member?
+            </ConfirmMessage>
+            <ConfirmActions>
+              <ConfirmCancel onClick={() => setShowTestAlertConfirm(false)}>Cancel</ConfirmCancel>
+              <button
+                onClick={handleConfirmTestAlert}
+                style={{
+                  background: '#1671D9',
+                  color: '#fff',
+                  border: 'none',
+                  padding: '10px 26px',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                }}
+              >
+                Yes
+              </button>
+            </ConfirmActions>
+          </ConfirmModal>
+        </Overlay>
+      )}
       {notAllowedModal && (
         <Overlay>
           <ConfirmModal role="dialog" aria-modal="true">
@@ -370,7 +428,7 @@ const MemberDetails = ({ member, outbound, inbound, onUnlink = () => {}, onUpdat
           <Switch
             checked={safetyAlerts}
             onChange={(v) => handleToggle("enableSafety", v)}
-            disabled={isUpdating}
+            disabled={isUpdating || isRestricted}
           />
         </Row>
 
@@ -379,7 +437,7 @@ const MemberDetails = ({ member, outbound, inbound, onUnlink = () => {}, onUpdat
           <Switch
             checked={locationShare}
             onChange={(v) => handleToggle("enableLocation", v)}
-            disabled={isUpdating || !safetyAlerts}
+            disabled={isUpdating || !safetyAlerts || isRestricted}
           />
         </Row>
 
@@ -392,7 +450,7 @@ const MemberDetails = ({ member, outbound, inbound, onUnlink = () => {}, onUpdat
           <Switch
             checked={securityAlerts}
             onChange={(v) => handleToggle("enableSecurity", v)}
-            disabled={isUpdating}
+            disabled={isUpdating || isRestricted}
           />
         </Row>
 
@@ -405,9 +463,47 @@ const MemberDetails = ({ member, outbound, inbound, onUnlink = () => {}, onUpdat
             readOnly
             value={t("txt_test_alert_message")}
           />
-          <PrimaryButton onClick={handleSendTestAlert} disabled={isSendingAlert}>
-            {isSendingAlert ? "..." : t("txt_send_test_alert")}
+          <PrimaryButton
+            onClick={handleSendTestAlert}
+            disabled={isSendingAlert || isRestricted}
+            style={testAlertStatus === 'sending' ? { background: '#2f80ed', opacity: 0.85 } : {}}
+          >
+            {testAlertStatus === 'sending' ? (
+              <>Sending<SpinnerIcon /></>
+            ) : (
+              t("txt_send_test_alert")
+            )}
           </PrimaryButton>
+          {displayTestAlertStatus === 'delivered' && (
+            <span style={{
+              padding: '8px 12px',
+              background: '#d4edda',
+              color: '#155724',
+              borderRadius: '6px',
+              fontSize: '11px',
+              fontWeight: '600',
+              textTransform: 'uppercase',
+              whiteSpace: 'nowrap',
+              letterSpacing: '0.4px',
+            }}>
+              TEST ALERT DELIVERED
+            </span>
+          )}
+          {displayTestAlertStatus === 'failed' && (
+            <span style={{
+              padding: '8px 12px',
+              background: '#f8d7da',
+              color: '#721c24',
+              borderRadius: '6px',
+              fontSize: '11px',
+              fontWeight: '600',
+              textTransform: 'uppercase',
+              whiteSpace: 'nowrap',
+              letterSpacing: '0.4px',
+            }}>
+              TEST ALERT DELIVERY FAILED
+            </span>
+          )}
         </TestRow>
       </Section>
 
@@ -453,7 +549,7 @@ const MemberDetails = ({ member, outbound, inbound, onUnlink = () => {}, onUpdat
 
         <ActionGroup>
           <SecondaryButton
-            disabled={!!actionLoading}
+            disabled={!!actionLoading || isRestricted}
             $isActive={false}
             onClick={() =>
               activeStatus === 5
@@ -469,7 +565,7 @@ const MemberDetails = ({ member, outbound, inbound, onUnlink = () => {}, onUpdat
               : t("dashboard_Snooze")}
           </SecondaryButton>
           <SecondaryButton
-            disabled={!!actionLoading}
+            disabled={!!actionLoading || isRestricted}
             $isActive={activeStatus === 3}
             onClick={() => handleStatusAction("block", 3)}
           >

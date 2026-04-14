@@ -16,6 +16,7 @@ import {
   getAllDevices,
   updateGatewayAPI,
   updateBeaconAPI,
+  stopSnooze,
 } from "../../../api/CustomerPortal/DevicesApi";
 import Toast from "../../../utility/CustomerPortal/Toast";
 import deleteIcon from "../../../assets/CustomerPortal/images/delete.svg";
@@ -55,6 +56,7 @@ const DeviceDetails = () => {
     queryKey: ["devices", user?.email],
     queryFn: () => getAllDevices(user?.email),
     enabled: !!user?.email,
+    refetchInterval: 5000,
   });
 
   const [formData, setFormData] = useState({
@@ -114,18 +116,42 @@ const DeviceDetails = () => {
     gatewayMAC: getLiveGatewayMAC(),
   };
 
+  const stoppedSnoozeRef = React.useRef(new Set());
+
   // Sync snooze fields from live API whenever devicesData refreshes
+  // Also auto-stop snooze if snoozeEndTime has passed
   React.useEffect(() => {
     if (!devicesData) return;
     const liveBeacon = devicesData?.data?.beacons?.devices?.find(
       (b) => b.macAddress === deviceData.macAddress,
     );
     if (liveBeacon) {
+      const isExpired =
+        liveBeacon.snoozeEndTime
+          ? new Date(liveBeacon.snoozeEndTime + "Z") < new Date()
+          : true;
+
       setFormData((prev) => ({
         ...prev,
         NotificationSnooze: liveBeacon.notificationSnooze || "Disabled",
-        snoozeEndTime: liveBeacon.snoozeEndTime || "",
+        snoozeEndTime: isExpired ? "" : (liveBeacon.snoozeEndTime || ""),
       }));
+
+      if (liveBeacon.snoozeEndTime && user?.email) {
+        const endTime = new Date(liveBeacon.snoozeEndTime + "Z");
+        const now = new Date();
+        if (endTime < now) {
+          if (!stoppedSnoozeRef.current.has(liveBeacon.macAddress)) {
+            stoppedSnoozeRef.current.add(liveBeacon.macAddress);
+            stopSnooze({ email: user.email, mac: liveBeacon.macAddress }).catch(() => {
+              stoppedSnoozeRef.current.delete(liveBeacon.macAddress);
+            });
+          }
+        } else {
+          // Snooze is still active — reset so Stop fires again when it next expires
+          stoppedSnoozeRef.current.delete(liveBeacon.macAddress);
+        }
+      }
     }
   }, [devicesData]);
 

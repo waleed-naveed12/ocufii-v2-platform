@@ -235,7 +235,7 @@ const Login = () => {
               size="large"
               width="full"
               isLoading={isLoading}
-              disabled={isLoading}
+              disabled={isLoading || !credentials.email || !credentials.password}
             >
               {isLoading ? t("login.loggingIn") : t("login.loginButton")}
             </PrimaryButton>

@@ -25,7 +25,7 @@ import { ROUTE } from "../../common/CustomerPortal/Routes";
 import { useTranslation } from "react-i18next";
 
 const Account = () => {
-  const { user } = useUser();
+  const { user, updateUser } = useUser();
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [profileData, setProfileData] = useState({
@@ -41,9 +41,8 @@ const Account = () => {
   const [pendingPasswordData, setPendingPasswordData] = useState({ currentPassword: "", newPassword: "" });
 
   const handleSave = (updatedProfileData) => {
-    console.log("Saving profile data:", updatedProfileData);
     setProfileData(updatedProfileData);
-    // Add your save logic here
+    updateUser({ firstName: updatedProfileData.userName });
   };
 
   const handleCancel = () => {

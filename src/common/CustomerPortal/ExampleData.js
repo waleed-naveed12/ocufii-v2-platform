@@ -1,5 +1,5 @@
 import baseStationImg from "../../assets/CustomerPortal/images/baseStation.png";
-import beaconImg from "../../assets/CustomerPortal/images/beacon.png";
+import beaconImg from "../../assets/CustomerPortal/images/beacon1.png";
 import flexibandImg from "../../assets/CustomerPortal/images/flexiband.png";
 import triggerLockImg from "../../assets/CustomerPortal/images/lockbeacon.png";
 import gunTriggerLockImg from "../../assets/CustomerPortal/images/gun_trigger_lock.png";

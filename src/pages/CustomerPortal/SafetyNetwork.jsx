@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useUser } from "../../context/CustomerPortal/UserContext";
 import {
   getSafetyNetworkMembers,
@@ -12,6 +12,8 @@ import {
   changeStatus,
   sendTestAlert,
 } from "../../api/CustomerPortal/SafetyNetworkApi";
+import { getDashboard } from "../../api/CustomerPortal/DashboardApi";
+import warningIcon from "../../assets/CustomerPortal/images/warning.svg";
 import DashboardLayout from "../../Layout/CustomerPortal/DashboardLayout";
 import { DashboardContent } from "../../styles/AdminPortal/Dashboard.styled";
 import { MdChevronRight } from "react-icons/md";
@@ -60,6 +62,7 @@ const SafetyNetwork = () => {
   const navigate = useNavigate();
   const { user } = useUser();
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
   const [openAccordion, setOpenAccordion] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedMember, setSelectedMember] = useState(null);
@@ -72,6 +75,22 @@ const SafetyNetwork = () => {
 
   // ManageSnooze full-page state: { member, snoozeView } | null
   const [manageSnoozeData, setManageSnoozeData] = useState(null);
+  const [showNotAllowedModal, setShowNotAllowedModal] = useState(false);
+
+  // Fetch active alerts to check for non-cancelled safety alerts
+  const { data: activeAlertsData } = useQuery({
+    queryKey: ["activeAlertsForSafetyNetwork", user?.email],
+    queryFn: () => getDashboard(user?.email, 10, "all"),
+    enabled: !!user?.email,
+    refetchInterval: 10000,
+  });
+
+  // True when the most recent safety alert is not cancelled
+  const hasActiveAlert = (() => {
+    const firstSafety = activeAlertsData?.data?.safety?.alerts?.[0];
+    if (!firstSafety) return false;
+    return !firstSafety.notificationReason?.includes("Canceled");
+  })();
 
   // Fetch safety network members
   const { data: safetyNetworkData, isLoading } = useQuery({
@@ -205,6 +224,10 @@ const SafetyNetwork = () => {
   };
 
   const handleDelete = (id) => {
+    if (hasActiveAlert) {
+      setShowNotAllowedModal(true);
+      return;
+    }
     const member = members.find((m) => m.id === id);
     setSelectedMember(member);
     setShowDeleteModal(true);
@@ -379,6 +402,74 @@ const SafetyNetwork = () => {
             onClose={handleCloseDelete}
             onConfirm={handleConfirmDelete}
           />
+
+          {/* NOT ALLOWED modal — shown when a safety alert is active */}
+          {showNotAllowedModal && (
+            <div
+              style={{
+                position: "fixed",
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                backgroundColor: "rgba(0,0,0,0.5)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                zIndex: 9999,
+              }}
+            >
+              <div
+                style={{
+                  background: "#fff",
+                  borderRadius: "12px",
+                  padding: "36px 32px",
+                  maxWidth: "360px",
+                  width: "90%",
+                  textAlign: "center",
+                  boxShadow: "0 8px 32px rgba(0,0,0,0.2)",
+                }}
+              >
+                <img
+                  src={warningIcon}
+                  alt="Warning"
+                  style={{ width: 56, height: 56, marginBottom: 16 }}
+                />
+                <div
+                  style={{
+                    fontSize: 18,
+                    fontWeight: 700,
+                    marginBottom: 12,
+                    color: "#222",
+                  }}
+                >
+                  NOT ALLOWED
+                </div>
+                <p style={{ fontSize: 14, color: "#444", marginBottom: 8 }}>
+                  You cannot make any changes, edits, or additions to the app
+                  while a safety alert is active.
+                </p>
+                <p style={{ fontSize: 14, color: "#444", marginBottom: 24 }}>
+                  To make changes, please cancel the current alert first.
+                </p>
+                <button
+                  onClick={() => setShowNotAllowedModal(false)}
+                  style={{
+                    background: "#2196F3",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: 6,
+                    padding: "10px 48px",
+                    fontSize: 15,
+                    fontWeight: 600,
+                    cursor: "pointer",
+                  }}
+                >
+                  OK
+                </button>
+              </div>
+            </div>
+          )}
           <ButtonGroup>
             <ActionButton onClick={handleInvite} disabled={false}>
               <img src={sendEmail} alt="Send Email" />
@@ -522,6 +613,10 @@ const SafetyNetwork = () => {
                             })
                           }
                           onUpdateMember={async ({ enableSafety, enableLocation, enableSecurity }) => {
+                            if (hasActiveAlert && enableSafety !== member.enableSafety) {
+                              setShowNotAllowedModal(true);
+                              throw new Error("NOT_ALLOWED");
+                            }
                             const result = await updateMember({
                               email: user?.email,
                               linkedMember: member.email,
@@ -555,10 +650,13 @@ const SafetyNetwork = () => {
                               linkedMember: member.email,
                               userId: user?.userId || user?.id || "",
                             });
-                            if (result?.code === 200 || result?.status === 200) {
-                              Toast.success(result?.message || "Test alert sent.");
+                            // Always invalidate so the accordion picks up the latest notificationStatus
+                            await queryClient.invalidateQueries({ queryKey: ["safetyNetworkMemberDetails", user?.email, member.email] });
+                            if (result?.status === 200 || result?.code === 200) {
+                              // Return result so MemberDetails can read notificationStatus directly
+                              return result;
                             } else {
-                              Toast.error(result?.message || "Failed to send test alert.");
+                              throw new Error(result?.message || "Failed to send test alert.");
                             }
                           }}
                           onUnlink={() => {

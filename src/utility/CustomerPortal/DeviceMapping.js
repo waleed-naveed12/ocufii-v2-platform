@@ -1,6 +1,6 @@
 import { MdBatteryAlert, MdSignalWifiOff } from "react-icons/md";
 import gunTriggerLock from "../../assets/CustomerPortal/images/gun_trigger_lock.png";
-import beaconImg from "../../assets/CustomerPortal/images/beacon.png";
+import beaconImg from "../../assets/CustomerPortal/images/beacon1.png";
 import wifiHubImg from "../../assets/CustomerPortal/images/baseStation.png";
 import flexibandImg from "../../assets/CustomerPortal/images/flexiband.png";
 import lockBeaconImg from "../../assets/CustomerPortal/images/lockbeacon.png";

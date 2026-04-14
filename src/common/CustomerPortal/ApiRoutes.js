@@ -21,6 +21,7 @@ export const APIROUTES = {
   SET_SNOOZE: "/Dashboard/devices/snooze/start",
   STOP_SNOOZE: "/Dashboard/devices/snooze/stop",
   DELETE_ACCOUNT: "/Email/DeleteAccount",
+  UPDATE_USERNAME: "/OcufiiDynamoDB/UpdateUsername",
   GET_RECIPIENTS: (email) => `/UserNotify/GetRecipients?email=${email}`,
   GET_SAFETY_NETWORK_MEMBERS: (email) =>
     `/SafetyLink/GetMembers?email=${email}`,

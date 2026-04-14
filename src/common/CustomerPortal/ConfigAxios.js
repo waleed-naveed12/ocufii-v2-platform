@@ -4,7 +4,7 @@ import Toast from "../../utility/CustomerPortal/Toast";
 // Create axios instance with base configuration
 const api = axios.create({
   baseURL: window.CustomerPortalBaseAPIURL, // Fallback to /api if window.baseAPIURL is not available
-  timeout: 60000, // 60 seconds timeout
+  timeout: 120000, // 120 seconds timeout
   headers: {
     // Remove Content-Type and Accept to avoid preflight
     "Content-Type": "application/json",

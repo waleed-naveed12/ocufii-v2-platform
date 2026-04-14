@@ -22,8 +22,15 @@ export const deleteUserAccount = async (email) => {
   }
 };
 
-export const deleteNotifications = async (email) => {
-  try {
+export const updateUsername = async (email, firstName) => {
+  const response = await api.put(APIROUTES.UPDATE_USERNAME, {
+    email,
+    firstName,
+  });
+  return response.data;
+};
+
+export const deleteNotifications = async (email) => {  try {
     const response = await api.delete(APIROUTES.DELETE_NOTIFICATIONS(email));
     console.log("Delete Notifications Response:", response);
     if (response.status !== 204) {

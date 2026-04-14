@@ -34,16 +34,36 @@ const SnoozeMode = ({ deviceType, deviceData, onBack }) => {
   const [snoozeEndTime, setSnoozeEndTime] = useState(
     deviceData.snoozeEndTime || null,
   );
-  const [isSnoozed, setIsSnoozed] = useState(
-    deviceData.snoozeEndTime && deviceData.snoozeEndTime !== "",
-  );
+  const [isSnoozed, setIsSnoozed] = useState(() => {
+    if (!deviceData.snoozeEndTime || deviceData.snoozeEndTime === "") return false;
+    return moment.utc(deviceData.snoozeEndTime).local().diff(moment()) > 0;
+  });
   const hoursRef = useRef(null);
   const minutesRef = useRef(null);
+  const stoppedRef = useRef(false);
 
   const hours = Array.from({ length: 24 }, (_, i) => i);
   const minutes = Array.from({ length: 60 }, (_, i) => i);
   const { user } = useUser();
   const queryClient = useQueryClient();
+
+  // Sync when parent passes an updated snoozeEndTime (e.g. from 5s poll)
+  useEffect(() => {
+    const incoming = deviceData.snoozeEndTime;
+    if (!incoming || incoming === "") {
+      setIsSnoozed(false);
+      setSnoozeEndTime(null);
+      return;
+    }
+    const isValid = moment.utc(incoming).local().diff(moment()) > 0;
+    if (isValid) {
+      setSnoozeEndTime(incoming);
+      setIsSnoozed(true);
+    } else {
+      setIsSnoozed(false);
+      setSnoozeEndTime(null);
+    }
+  }, [deviceData.snoozeEndTime]);
 
   useEffect(() => {
     if (isSnoozed) {
@@ -65,6 +85,20 @@ const SnoozeMode = ({ deviceType, deviceData, onBack }) => {
       setRemainingTime({ hours: 0, minutes: 0 });
       setIsSnoozed(false);
       setSnoozeEndTime(null);
+      // Call Stop API when snooze expires automatically
+      if (!stoppedRef.current && user?.email) {
+        stoppedRef.current = true;
+        stopSnooze(
+          user.email,
+          deviceData?.macAddress || deviceData?.address,
+        )
+          .then(() => {
+            queryClient.invalidateQueries({ queryKey: ["devices", user?.email] });
+          })
+          .catch(() => {
+            stoppedRef.current = false;
+          });
+      }
       return;
     }
 
@@ -109,6 +143,7 @@ const SnoozeMode = ({ deviceType, deviceData, onBack }) => {
       console.log("Snooze started:", response);
       // Use the snoozeTimeStampEnd from API response
       if (response?.snoozeSettings?.snoozeTimeStampEnd) {
+        stoppedRef.current = false;
         setSnoozeEndTime(response.snoozeSettings.snoozeTimeStampEnd);
         setIsSnoozed(true);
         // Invalidate devices query to refetch updated data

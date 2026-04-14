@@ -149,12 +149,12 @@ export const getTOSItemPublic = async (bearerToken) => {
  * Uses a service token as Bearer since the user is not yet authenticated.
  */
 export const webSignUpAPI = async (
-  { email, fullName, password, isAdult, tosAccepted },
+  { email, fullName, password, isAdult, tosAccepted, gmtInfo },
   bearerToken,
 ) => {
   const response = await axios.post(
     `${window.CustomerPortalBaseAPIURL}${APIROUTES.WEBSIGNUP}`,
-    { email, fullName, password, isAdult, tosAccepted },
+    { email, fullName, password, isAdult, tosAccepted, gmtInfo },
     {
       headers: {
         "Content-Type": "application/json",

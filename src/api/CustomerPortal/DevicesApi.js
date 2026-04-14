@@ -14,6 +14,16 @@ export const getAllDevices = async (email) => {
   }
 };
 
+export const stopSnooze = async ({ email, mac }) => {
+  try {
+    const response = await api.post(APIROUTES.STOP_SNOOZE, { email, BeaconMAC: mac });
+    return response.data;
+  } catch (error) {
+    console.error("Error stopping snooze:", error);
+    throw error;
+  }
+};
+
 export const updateBeaconAPI = async ({
   email,
   beaconMAC,

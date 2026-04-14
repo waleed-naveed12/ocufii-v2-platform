@@ -5,11 +5,11 @@ import { DashboardContent } from "../../styles/CustomerPortal/Dashboard.styled";
 import DashboardLayout from "../../Layout/CustomerPortal/DashboardLayout";
 import DataTable from "../../components/CustomerPortal/DataTable";
 import hubImage from "../../assets/CustomerPortal/images/baseStation.png";
-import beaconImg from "../../assets/CustomerPortal/images/beacon.png";
+import beaconImg from "../../assets/CustomerPortal/images/beacon1.png";
 import triggerLockImg from "../../assets/CustomerPortal/images/lockbeacon.png";
 import safettyCardImg from "../../assets/CustomerPortal/images/safety_card2.png";
 import { useUser } from "../../context/CustomerPortal/UserContext";
-import { getAllDevices } from "../../api/CustomerPortal/DevicesApi";
+import { getAllDevices, stopSnooze } from "../../api/CustomerPortal/DevicesApi";
 import {
   BeaconColumn,
   HubsColumn,
@@ -37,6 +37,25 @@ const Devices = () => {
     enabled: !!user?.email,
     refetchInterval: 5000, // Refetch every 5 seconds
   });
+
+  const stoppedSnoozeRef = React.useRef(new Set());
+
+  // Auto-stop snooze for beacons whose snoozeEndTime has passed
+  React.useEffect(() => {
+    if (!devicesData?.data?.beacons?.devices || !user?.email) return;
+    const now = new Date();
+    devicesData.data.beacons.devices.forEach((beacon) => {
+      if (!beacon.snoozeEndTime) return;
+      // Append "Z" to treat the API timestamp as UTC (consistent with GeneralSettings)
+      const endTime = new Date(beacon.snoozeEndTime + "Z");
+      if (endTime < now && !stoppedSnoozeRef.current.has(beacon.macAddress)) {
+        stoppedSnoozeRef.current.add(beacon.macAddress);
+        stopSnooze({ email: user.email, mac: beacon.macAddress }).catch(() => {
+          stoppedSnoozeRef.current.delete(beacon.macAddress);
+        });
+      }
+    });
+  }, [devicesData, user?.email]);
 
   if (isLoading) {
     return (

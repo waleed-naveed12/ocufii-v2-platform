@@ -276,6 +276,15 @@ const TermsOfServiceSignUp = () => {
           password,
           isAdult: true,
           tosAccepted: true,
+          gmtInfo: Intl.DateTimeFormat().resolvedOptions().timeZone
+            ? (() => {
+                const offset = -new Date().getTimezoneOffset();
+                const sign = offset >= 0 ? "+" : "-";
+                const h = String(Math.floor(Math.abs(offset) / 60)).padStart(2, "0");
+                const m = String(Math.abs(offset) % 60).padStart(2, "0");
+                return `${sign}${h}:${m}`;
+              })()
+            : "+00:00",
         },
         token,
       );

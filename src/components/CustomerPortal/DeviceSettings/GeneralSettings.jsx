@@ -31,6 +31,10 @@ const GeneralSettings = ({
   const [localFormData, setLocalFormData] = useState(formData);
   // console.log("local form data render:", localFormData);
 
+  React.useEffect(() => {
+    setLocalFormData((prev) => ({ ...prev, snoozeEndTime: formData.snoozeEndTime }));
+  }, [formData.snoozeEndTime]);
+
   const getSnoozeTimeRemaining = () => {
     // console.log("Calculating snooze time for:", localFormData.snoozeEndTime);
     if (!localFormData.snoozeEndTime || localFormData.snoozeEndTime === "") {

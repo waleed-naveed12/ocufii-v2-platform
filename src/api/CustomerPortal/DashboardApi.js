@@ -1,14 +1,30 @@
 import api from "../../common/CustomerPortal/ConfigAxios";
+import axios from "axios";
 import { APIROUTES } from "../../common/CustomerPortal/ApiRoutes";
 import Toast from "../../utility/CustomerPortal/Toast";
 import i18n from "../../i18n/CustomerPortal/config";
 import { dateRangeMap } from "../../common/CustomerPortal/CommonData";
 
+// Temporary: GET_ACTIVE_ALERTS runs against demo while backend is on localhost
+const demoApi = axios.create({
+  baseURL: "https://demo.ocufii.com/api/api",
+  timeout: 120000,
+  headers: {
+    "Content-Type": "application/json",
+    Accept: "application/json",
+  },
+});
+demoApi.interceptors.request.use((config) => {
+  const token = sessionStorage.getItem("ocufii_customer_auth_token");
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
+});
+
 export const getDashboard = async (email, limit = 1000, dateRange = "all") => {
   try {
     dateRange = dateRangeMap[dateRange];
     // console.log("Fetching dashboard with dateRange:", dateRange);
-    const response = await api.get(
+    const response = await demoApi.get(
       APIROUTES.GET_ACTIVE_ALERTS(email, limit, dateRange),
     );
     // console.log("return response", response.data);
